@@ -350,7 +350,7 @@
     }
 
     pool.sort(function() { return 0.5 - Math.random(); });
-    var totalQ = Math.min(pool.length, meta.isBoss ? 15 : 10);
+    var totalQ = Math.min(pool.length, meta.isBoss ? 35 : 20);
     
     examState.lvl = lvl;
     examState.questions = pool.slice(0, totalQ);
