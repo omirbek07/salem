@@ -22,9 +22,16 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); padding: 14px; display: flex; justify-content: center; min-height: 100vh; }
-    .app { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 14px; }
+    .app { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 14px; position: relative; }
     button { cursor: pointer; -webkit-appearance: none; }
 
+    /* Модальное окно имени */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(44, 38, 35, 0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
+    .modal-card { background: white; border-radius: var(--radius); padding: 26px 20px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px; }
+    .modal-input { width: 100%; padding: 14px; border: 2px solid var(--sand); border-radius: 14px; font-size: 1.05rem; font-weight: 700; text-align: center; outline: none; }
+    .modal-input:focus { border-color: var(--sage); }
+
+    /* Шапка */
     .header { background: var(--card-bg); padding: 16px 20px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); }
     .header h1 { font-size: 1.25rem; font-weight: 800; }
     .header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
@@ -33,13 +40,16 @@
     .streak-badge { background: #FFF4E5; color: #D97706; font-weight: 800; padding: 6px 12px; border-radius: 99px; font-size: 0.85rem; border: 1px solid #FDE68A; }
     .xp-badge { background: var(--terracotta-light); color: var(--terracotta); font-weight: 800; padding: 6px 14px; border-radius: 99px; font-size: 0.9rem; }
 
+    /* Вкладки */
     .tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--sand); padding: 4px; border-radius: 14px; gap: 4px; }
     .tab-btn { border: none; background: transparent; padding: 11px 0; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); border-radius: 10px; transition: 0.2s; }
     .tab-btn.active { background: white; color: var(--text); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
 
+    /* Экраны */
     .view { display: none; flex-direction: column; gap: 12px; }
     .view.active { display: flex; }
 
+    /* Карточки */
     .search-input { width: 100%; background: white; border: 1.5px solid var(--sand); padding: 12px 16px; border-radius: 14px; font-size: 0.9rem; outline: none; -webkit-appearance: none; }
     .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
     .chip { background: white; border: 1.5px solid var(--sand); padding: 8px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
@@ -60,6 +70,7 @@
     .nav-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
     .btn-nav { flex: 1; background: white; border: 1.5px solid var(--sand); padding: 12px; border-radius: 14px; font-size: 0.88rem; font-weight: 700; }
 
+    /* Тренажер */
     .trainer-card { background: white; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
     .trainer-header { display: flex; justify-content: space-between; align-items: center; }
     .trainer-type-badge { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; background: #FAF8F5; color: var(--text-muted); border: 1px solid var(--sand); }
@@ -86,6 +97,7 @@
     .feedback-box.correct { display: block; background: var(--sage-light); color: var(--sage); }
     .feedback-box.wrong { display: block; background: var(--terracotta-light); color: var(--terracotta); }
 
+    /* Купоны */
     .coupons-list { display: flex; flex-direction: column; gap: 12px; }
     .coupon-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; border: 1.5px solid var(--sand); position: relative; }
     .coupon-card.unlocked { border-color: #FBBF24; background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF7 100%); }
@@ -99,6 +111,7 @@
     .btn-coupon.active { background: #D97706; color: white; cursor: pointer; }
     .btn-coupon.used { background: #E5E7EB; color: #9CA3AF; cursor: default; }
 
+    /* Диалоги */
     .scen-picker { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
     .scen-tab { background: white; border: 1.5px solid var(--sand); padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
     .scen-tab.active { background: var(--sage); color: white; border-color: var(--sage); }
@@ -113,10 +126,20 @@
 <body>
 
 <div class="app">
+  <!-- ВСПЛЫВАЮЩЕЕ ОКНО РЕГИСТРАЦИИ ИМЕНИ -->
+  <div class="modal-overlay" id="name-modal">
+    <div class="modal-card">
+      <h2 style="font-size:1.3rem; font-weight:800;">Қош келдіңіз! 👋</h2>
+      <p style="font-size:0.86rem; color:var(--text-muted);">Введи своё имя, чтобы сохранять баллы и серии тренировок:</p>
+      <input type="text" class="modal-input" id="user-name-input" placeholder="Твоё имя...">
+      <button class="btn-main" onclick="submitUserName()">Начать обучение 🚀</button>
+    </div>
+  </div>
+
   <header class="header">
     <div>
       <h1>Сәлем, Жаным!</h1>
-      <p>Казахский для дома и жизни</p>
+      <p id="user-greeting">Казахский для дома и жизни</p>
     </div>
     <div class="stats-row">
       <div class="streak-badge" id="streak-indicator">🔥 0</div>
@@ -131,7 +154,7 @@
     <button class="tab-btn" id="tab3" onclick="showTab(3)">Диалоги</button>
   </nav>
 
-  <!-- ВКЛАДКА 1 -->
+  <!-- ВКЛАДКА 1: КАРТОЧКИ -->
   <section class="view active" id="view-cards">
     <input type="text" class="search-input" id="search-bar" placeholder="🔍 Найти слово или перевод..." oninput="handleSearch()">
 
@@ -166,7 +189,7 @@
     </div>
   </section>
 
-  <!-- ВКЛАДКА 2 -->
+  <!-- ВКЛАДКА 2: ТРЕНАЖЕР -->
   <section class="view" id="view-quiz">
     <div class="trainer-card">
       <div class="trainer-header">
@@ -182,7 +205,7 @@
     </div>
   </section>
 
-  <!-- ВКЛАДКА 3 -->
+  <!-- ВКЛАДКА 3: КУПОНЫ -->
   <section class="view" id="view-coupons">
     <div style="background:white; padding:16px 20px; border-radius:var(--radius); box-shadow:var(--shadow);">
       <div style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Твой баланс</div>
@@ -193,7 +216,7 @@
     <div class="coupons-list" id="coupons-container"></div>
   </section>
 
-  <!-- ВКЛАДКА 4 -->
+  <!-- ВКЛАДКА 4: ДИАЛОГИ -->
   <section class="view" id="view-dialogue">
     <div class="scen-picker">
       <button class="scen-tab active" id="scen-tab-0" onclick="pickScenario(0)">☕ Уютный чай</button>
@@ -212,6 +235,7 @@
 </div>
 
 <script>
+  // БАЗА ДАННЫХ (104 карточки)
   var data = [
     // 1. ДАСТАРҚАН ЖӘНЕ ШАЙ (20)
     { id: 1, kz: "Шай ішейікші!", trans: "[Шай ишейикши́!]", ru: "Давайте попьем чайку!", cat: "table", catName: "Дастарқан & Шай", ctx: "Уютный призыв собраться за столом." },
@@ -332,6 +356,7 @@
     { id: 104, kz: "Тағы да келіңіздер!", trans: "[Тагы́ да келининизде́р!]", ru: "Приходите к нам ещё!", cat: "guest", catName: "Гости & Праздники", ctx: "Теплый зов в гости." }
   ];
 
+  // КУПОНЫ-НАГРАДЫ
   var coupons = [
     { id: 'c1', title: "Утренний чай или кофе в постель ☕", desc: "Муж готовит любимый утренний напиток и приносит прямо в кровать.", cost: 100, status: 'locked' },
     { id: 'c2', title: "Массаж ног или плеч 💆‍♀️", desc: "Расслабляющий 20-минутный массаж после насыщенного дня.", cost: 250, status: 'locked' },
@@ -339,7 +364,22 @@
     { id: 'c4', title: "Свидание-сюрприз на выходных 💎", desc: "Классная совместная поездка, ресторан или сюрприз от мужа.", cost: 1000, status: 'locked' }
   ];
 
-  // 1. ЗАГРУЗКА ИЗ ПАМЯТИ ТЕЛЕФОНА (localStorage)
+  // ----------------------------------------------------
+  // НАСТРОЙКИ МОНИТОРИНГА В TELEGRAM
+  // ----------------------------------------------------
+  var TG_BOT_TOKEN = "8666501690:AAHJuYYzjMfXSYlTHfhBhrs-hVClMKf_4Xs";
+  var TG_CHAT_ID = "414385344";
+
+  function sendTelegramLog(msg) {
+    if (!TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("СЮДА") !== -1) return;
+    var url = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage?chat_id=" + TG_CHAT_ID + "&text=" + encodeURIComponent(msg);
+    fetch(url).catch(function(e) {});
+  }
+
+  // ----------------------------------------------------
+  // СОХРАНЕНИЕ ДАННЫХ В localStorage
+  // ----------------------------------------------------
+  var userName = localStorage.getItem('kz_user_name') || '';
   var score = parseInt(localStorage.getItem('kz_score') || '0', 10);
   var streak = parseInt(localStorage.getItem('kz_streak') || '0', 10);
   var savedCoupons = {};
@@ -359,6 +399,27 @@
     localStorage.setItem('kz_coupons', JSON.stringify(couponState));
   }
 
+  function checkUserRegistration() {
+    if (!userName) {
+      document.getElementById('name-modal').style.display = 'flex';
+    } else {
+      document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Казахский для жизни";
+    }
+  }
+
+  function submitUserName() {
+    var val = document.getElementById('user-name-input').value.trim();
+    if (!val) return;
+    userName = val;
+    localStorage.setItem('kz_user_name', userName);
+    document.getElementById('name-modal').style.display = 'none';
+    document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Казахский для жизни";
+    sendTelegramLog("👋 Новый ученик запустил приложение: " + userName);
+  }
+
+  // ----------------------------------------------------
+  // КАРТОЧКИ
+  // ----------------------------------------------------
   var currentList = data.slice();
   var cIdx = 0;
 
@@ -428,6 +489,9 @@
     renderCard();
   }
 
+  // ----------------------------------------------------
+  // ТРЕНАЖЕР И БАЛЛЫ
+  // ----------------------------------------------------
   function getMultiplier() {
     if (streak > 10) return 3;
     if (streak > 5) return 2;
@@ -441,6 +505,11 @@
       var gain = 2 * mult;
       score += gain;
       showFeedback(true, "+" + gain + " ⭐ (Серия: " + streak + " 🔥)");
+
+      // Логируем прогресс в Telegram каждые 20 баллов или крутой стрик
+      if (score > 0 && (score % 20 === 0 || streak === 5 || streak === 10)) {
+        sendTelegramLog("⭐ " + (userName || "Ученик") + " набрал(а) " + score + " баллов! (Серия: " + streak + " 🔥)");
+      }
     } else {
       streak = 0;
       score = Math.max(0, score - 1);
@@ -476,6 +545,7 @@
     else if (currentTaskType === 4) renderType4_GapInput(randItem);
   }
 
+  // ТИП 1: Выбор перевода
   function renderType1_Choice(item) {
     document.getElementById('task-badge').innerText = "Тест на перевод";
     var toKazakh = Math.random() > 0.5;
@@ -521,6 +591,7 @@
     });
   }
 
+  // ТИП 2: Сборка из блоков с ловушками
   function renderType2_Scramble(item) {
     document.getElementById('task-badge').innerText = "Собери предложение";
     document.getElementById('task-prompt').innerText = "«" + item.ru + "»";
@@ -620,6 +691,7 @@
     });
   }
 
+  // ТИП 3: Заполни пропуск (выбор)
   function renderType3_GapChoice(item) {
     document.getElementById('task-badge').innerText = "Вставь пропущенное слово";
     var words = item.kz.split(' ');
@@ -653,14 +725,13 @@
       b.className = 'opt-btn';
       b.innerText = opt;
       b.onclick = function() {
-        var allBtns = document.querySelectorAll('.opt-btn');
-        allBtns.forEach(function(btn) { btn.style.pointerEvents = 'none'; });
+        document.querySelectorAll('.opt-btn').forEach(function(btn) { btn.style.pointerEvents = 'none'; });
         if (opt.toLowerCase() === targetWord.toLowerCase()) {
           b.classList.add('correct');
           updateScore(true);
         } else {
           b.classList.add('wrong');
-          allBtns.forEach(function(btn) { 
+          document.querySelectorAll('.opt-btn').forEach(function(btn) { 
             if (btn.innerText.toLowerCase() === targetWord.toLowerCase()) btn.classList.add('correct'); 
           });
           updateScore(false);
@@ -671,6 +742,7 @@
     });
   }
 
+  // ТИП 4: Впиши слово вручную
   function renderType4_GapInput(item) {
     document.getElementById('task-badge').innerText = "Впиши слово сама";
     var words = item.kz.split(' ');
@@ -725,6 +797,9 @@
     }
   }
 
+  // ----------------------------------------------------
+  // КУПОНЫ
+  // ----------------------------------------------------
   function updateCouponsUI() {
     var container = document.getElementById('coupons-container');
     container.innerHTML = '';
@@ -759,10 +834,14 @@
     if (!c || c.status === 'redeemed') return;
     c.status = 'redeemed';
     saveProgress();
+    sendTelegramLog("🎁 ВНИМАНИЕ! " + (userName || "Ученик") + " активировал(а) купон: «" + c.title + "»!");
     alert("🎉 Поздравляем, Жаным!\nКупон «" + c.title + "» активирован!\nПокажи этот экран мужу прямо сейчас! ❤️");
     updateCouponsUI();
   }
 
+  // ----------------------------------------------------
+  // ДИАЛОГИ
+  // ----------------------------------------------------
   var scenarios = [
     {
       title: "☕ Уютный чай за дастарханом",
@@ -845,6 +924,9 @@
     });
   }
 
+  // ----------------------------------------------------
+  // НАВИГАЦИЯ И СТАРТ
+  // ----------------------------------------------------
   function showTab(idx) {
     ['cards', 'quiz', 'coupons', 'dialogue'].forEach(function(name, i) {
       document.getElementById('tab' + i).classList.toggle('active', i === idx);
@@ -860,6 +942,7 @@
   document.getElementById('coupon-balance').innerText = score + " ⭐";
   renderCard();
   updateCouponsUI();
+  checkUserRegistration();
 </script>
 
 </body>
