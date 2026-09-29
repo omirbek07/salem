@@ -286,10 +286,10 @@
   ];
 
   var coupons = [
-    { id: 'c1', title: "Утренний кофе / чай в постель ☕", desc: "Муж готовит напиток и приносит прямо в постель.", cost: 60, reqLvl: 1 },
-    { id: 'c2', title: "Освобождение от посуды 🍳", desc: "Кухня и посуда полностью на муже на весь вечер.", cost: 120, reqLvl: 3 },
-    { id: 'c3', title: "Расслабляющий массаж 💆‍♀️", desc: "30 минут полного релакса и заботы.", cost: 200, reqLvl: 6 },
-    { id: 'c4', title: "Свидание-сюрприз или ужин 💎", desc: "Поездка, лучший ресторан и подарки без повода.", cost: 350, reqLvl: 10 }
+    { id: 'c1', title: "Утренний кофе / чай в постель ☕", desc: "Еще в разработке.", cost: 100, reqLvl: 1 },
+    { id: 'c2', title: "Освобождение от посуды 🍳", desc: "Еще в разработке.", cost: 200, reqLvl: 3 },
+    { id: 'c3', title: "Расслабляющий массаж 💆‍♀️", desc: "Еще в разработке.", cost: 500, reqLvl: 6 },
+    { id: 'c4', title: "Свидание-сюрприз или ужин 💎", desc: "Еще в разработке.", cost: 1000, reqLvl: 10 }
   ];
 
   // ----------------------------------------------------
@@ -434,8 +434,17 @@
       return;
     }
 
-    examState.timeLeft = 15;
+    var q = examState.questions[examState.currIdx];
+    document.getElementById('exam-q-count').innerText = "Вопрос " + (examState.currIdx + 1) + " / " + examState.questions.length;
+    document.getElementById('exam-lives').innerText = "❤️ Жизни: " + (1 - examState.errors) + " / 1";
+
+    // Чередуем 4 типа заданий: 0 - выбор, 1 - сборка, 2 - пропуск (тест), 3 - ввод руками
+    var qType = examState.currIdx % 4;
+
+    // Для набора руками и сборки даем 25 секунд, для быстрых тестов — 15
+    examState.timeLeft = (qType === 1 || qType === 3) ? 25 : 15;
     updateExamTimerUI();
+
     examState.timer = setInterval(function() {
       examState.timeLeft--;
       updateExamTimerUI();
@@ -445,23 +454,151 @@
       }
     }, 1000);
 
-    var q = examState.questions[examState.currIdx];
-    document.getElementById('exam-q-count').innerText = "Вопрос " + (examState.currIdx + 1) + " / " + examState.questions.length;
-    document.getElementById('exam-lives').innerText = "❤️ Жизни: " + (1 - examState.errors) + " / 1";
-    document.getElementById('exam-prompt').innerText = "«" + q.ru + "»";
-
-    var dist = allCards.filter(function(c) { return c.id !== q.id; }).sort(function() { return 0.5 - Math.random(); }).slice(0, 2);
-    var options = [q.kz, dist[0].kz, dist[1].kz].sort(function() { return 0.5 - Math.random(); });
-
+    var promptEl = document.getElementById('exam-prompt');
     var optBox = document.getElementById('exam-options');
     optBox.innerHTML = '';
-    options.forEach(function(opt) {
-      var b = document.createElement('button');
-      b.className = 'opt-btn';
-      b.innerText = opt;
-      b.onclick = function() { handleExamAnswer(b, opt === q.kz, false); };
-      optBox.appendChild(b);
-    });
+
+    if (qType === 0) {
+      // ТИП 1: Выбор перевода
+      promptEl.innerText = "«" + q.ru + "»";
+      var dist = allCards.filter(function(c) { return c.id !== q.id; }).sort(function() { return 0.5 - Math.random(); }).slice(0, 2);
+      var opts = [q.kz, dist[0].kz, dist[1].kz].sort(function() { return 0.5 - Math.random(); });
+      opts.forEach(function(opt) {
+        var b = document.createElement('button');
+        b.className = 'opt-btn';
+        b.innerText = opt;
+        b.onclick = function() { handleExamAnswer(b, opt === q.kz, false); };
+        optBox.appendChild(b);
+      });
+
+    } else if (qType === 1) {
+      // ТИП 2: Собери предложение из слов
+      promptEl.innerText = "Собери фразу: «" + q.ru + "»";
+      var cleanKz = q.kz.replace(/[!?,.]/g, '').trim();
+      var correctWords = cleanKz.split(/\s+/);
+      
+      // Добавляем 2 ложных слова-дистрактора
+      var distWords = ["сәл", "шай", "нан", "су", "өте", "бар", "жоқ", "жақсы"].filter(function(w) {
+        return !correctWords.some(function(cw) { return cw.toLowerCase() === w.toLowerCase(); });
+      }).sort(function() { return 0.5 - Math.random(); }).slice(0, 2);
+
+      var wordPool = correctWords.concat(distWords).map(function(w, idx) {
+        return { id: 'w_' + idx + '_' + Math.random().toString(36).substr(2, 4), text: w };
+      }).sort(function() { return 0.5 - Math.random(); });
+
+      var userChosen = [];
+
+      optBox.innerHTML = 
+        '<div id="exam-build-zone" style="min-height:52px; background:#FAF8F5; border:2px dashed var(--sand); border-radius:14px; padding:8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">' +
+          '<span style="color:var(--text-muted); font-size:0.85rem;" id="build-placeholder">Нажимай на слова ниже...</span>' +
+        '</div>' +
+        '<div id="exam-word-bank" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>' +
+        '<div style="display:flex; gap:8px; margin-top:10px;">' +
+          '<button class="btn-main" style="background:#FAF8F5; color:var(--text); border:1.5px solid var(--sand); flex:1; padding:10px;" id="btn-reset-scramble">Сброс ↺</button>' +
+          '<button class="btn-main" style="flex:1; padding:10px;" id="btn-check-scramble">Готово ✨</button>' +
+        '</div>';
+
+      var buildZone = document.getElementById('exam-build-zone');
+      var wordBank = document.getElementById('exam-word-bank');
+
+      function updateBuildUI() {
+        buildZone.innerHTML = '';
+        if (userChosen.length === 0) {
+          buildZone.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">Нажимай на слова ниже...</span>';
+          return;
+        }
+        userChosen.forEach(function(item, index) {
+          var tag = document.createElement('span');
+          tag.style.cssText = "background:var(--sand); padding:8px 12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer;";
+          tag.innerText = item.text;
+          tag.onclick = function() {
+            userChosen.splice(index, 1);
+            var el = document.getElementById(item.id);
+            if (el) el.style.opacity = '1';
+            updateBuildUI();
+          };
+          buildZone.appendChild(tag);
+        });
+      }
+
+      wordPool.forEach(function(item) {
+        var chip = document.createElement('button');
+        chip.id = item.id;
+        chip.style.cssText = "background:white; border:1.5px solid var(--sand); padding:8px 12px; border-radius:10px; font-weight:700; font-size:0.9rem;";
+        chip.innerText = item.text;
+        chip.onclick = function() {
+          chip.style.opacity = '0.3';
+          userChosen.push(item);
+          updateBuildUI();
+        };
+        wordBank.appendChild(chip);
+      });
+
+      document.getElementById('btn-reset-scramble').onclick = function() {
+        userChosen = [];
+        updateBuildUI();
+        wordPool.forEach(function(item) {
+          var el = document.getElementById(item.id);
+          if (el) el.style.opacity = '1';
+        });
+      };
+
+      document.getElementById('btn-check-scramble').onclick = function() {
+        var answer = userChosen.map(function(w) { return w.text; }).join(' ');
+        var correct = correctWords.join(' ');
+        handleExamAnswer(null, answer === correct, false);
+      };
+
+    } else if (qType === 2) {
+      // ТИП 3: Пропуск в предложении (выбор слова)
+      var words = q.kz.split(' ');
+      var gapIdx = Math.floor(Math.random() * words.length);
+      var targetWord = words[gapIdx].replace(/[!?,.]/g, '');
+      var maskedKz = words.map(function(w, i) { return i === gapIdx ? '_____' : w; }).join(' ');
+
+      promptEl.innerText = maskedKz + "\n(«" + q.ru + "»)";
+
+      var fakes = ["сәл", "шай", "нан", "су", "жақсы", "бар", "өте"].filter(function(w) { return w !== targetWord.toLowerCase(); });
+      fakes.sort(function() { return 0.5 - Math.random(); });
+      var opts = [targetWord, fakes[0], fakes[1]].sort(function() { return 0.5 - Math.random(); });
+
+      opts.forEach(function(opt) {
+        var b = document.createElement('button');
+        b.className = 'opt-btn';
+        b.innerText = opt;
+        b.onclick = function() { handleExamAnswer(b, opt.toLowerCase() === targetWord.toLowerCase(), false); };
+        optBox.appendChild(b);
+      });
+
+    } else if (qType === 3) {
+      // ТИП 4: Впиши слово вручную
+      var words = q.kz.split(' ');
+      var gapIdx = 0;
+      var cleanTarget = words[gapIdx].replace(/[!?,.]/g, '');
+      var maskedKz = words.map(function(w, i) { return i === gapIdx ? '_____' : w; }).join(' ');
+
+      promptEl.innerText = maskedKz + "\n(«" + q.ru + "»)";
+
+      optBox.innerHTML = 
+        '<div style="display:flex; flex-direction:column; gap:10px;">' +
+          '<input type="text" id="exam-manual-input" class="modal-input" placeholder="Введи пропущенное слово..." autocomplete="off">' +
+          '<button class="btn-main" id="btn-submit-manual">Проверить ответ ✍️</button>' +
+        '</div>';
+
+      function submitManual() {
+        var val = document.getElementById('exam-manual-input').value.trim().toLowerCase();
+        handleExamAnswer(null, val === cleanTarget.toLowerCase(), false);
+      }
+
+      document.getElementById('btn-submit-manual').onclick = submitManual;
+      document.getElementById('exam-manual-input').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') submitManual();
+      });
+      setTimeout(function() {
+        var inp = document.getElementById('exam-manual-input');
+        if (inp) inp.focus();
+      }, 100);
+    }
   }
 
   function updateExamTimerUI() {
