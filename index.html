@@ -85,6 +85,7 @@
     .btn-coupon { background: var(--sand); border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: not-allowed; color: var(--text-muted); }
     .btn-coupon.active { background: var(--gold); color: white; cursor: pointer; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -132,6 +133,15 @@
 
   <!-- ВКЛАДКА 0: КАРТА УРОВНЕЙ -->
   <section class="view active" id="view-map">
+    <!-- БЛОК РАБОТЫ НАД ОШИБКАМИ -->
+    <div id="mistakes-banner" style="display:none; background:#FFF4F0; border:2px solid var(--terracotta); border-radius:var(--radius); padding:16px; margin-bottom:10px; justify-content:space-between; align-items:center;">
+      <div>
+        <h3 style="font-size:0.95rem; font-weight:800; color:var(--terracotta);">🎯 Работа над ошибками</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Сложных фраз на повтор: <strong id="mistakes-count">0</strong></p>
+      </div>
+      <button class="btn-main" style="background:var(--terracotta); padding:8px 14px; font-size:0.8rem;" onclick="startMistakesExam()">Повторить ↺</button>
+    </div>
+
     <div id="level-list" style="display:flex; flex-direction:column; gap:10px;"></div>
   </section>
 
@@ -303,6 +313,62 @@
   var userName = localStorage.getItem('kz_v3_name') || '';
   var score = parseInt(localStorage.getItem('kz_v3_score') || '0', 10);
   var completedLevels = JSON.parse(localStorage.getItem('kz_v3_lvls') || '{}'); 
+  var mistakeIds = JSON.parse(localStorage.getItem('kz_v3_mistakes') || '[]');
+
+  function saveMistake(cardId) {
+    if (cardId && mistakeIds.indexOf(cardId) === -1) {
+      mistakeIds.push(cardId);
+      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
+      updateMistakesUI();
+    }
+  }
+
+  function removeMistake(cardId) {
+    var idx = mistakeIds.indexOf(cardId);
+    if (idx !== -1) {
+      mistakeIds.splice(idx, 1);
+      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
+      updateMistakesUI();
+    }
+  }
+
+  function updateMistakesUI() {
+    var banner = document.getElementById('mistakes-banner');
+    var countEl = document.getElementById('mistakes-count');
+    if (!banner || !countEl) return;
+    if (mistakeIds.length > 0) {
+      banner.style.display = 'flex';
+      countEl.innerText = mistakeIds.length;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // Запуск праздничного салюта из конфетти
+  function launchConfetti() {
+    if (typeof confetti === 'function') {
+      confetti({
+        particleCount: 90,
+        spread: 70,
+        origin: { y: 0.65 }
+      });
+      setTimeout(function() {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+      }, 250);
+    }
+  }
+
   var savedCoupons = JSON.parse(localStorage.getItem('kz_v3_coupons') || '{}');
 
   var todayDateStr = new Date().toISOString().slice(0, 10);
@@ -614,8 +680,13 @@
     clearInterval(examState.timer);
     document.querySelectorAll('.opt-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
 
+    var currentQ = examState.questions[examState.currIdx];
+
     if (isCorrect) {
       playSuccessSound();
+      if (examState.isMistakesMode && currentQ) {
+        removeMistake(currentQ.id); // Убираем из банка ошибок при верном ответе
+      }
       if (btn) btn.classList.add('correct');
       setTimeout(function() {
         examState.currIdx++;
@@ -623,6 +694,8 @@
       }, 600);
     } else {
       playErrorSound();
+      if (currentQ) saveMistake(currentQ.id); // Сохраняем в банк ошибок
+
       if (btn) btn.classList.add('wrong');
       examState.errors++;
       if (examState.errors > 1) {
@@ -637,9 +710,11 @@
     }
   }
 
+
   function finishExam(success) {
     clearInterval(examState.timer);
     if (success) {
+      launchConfetti();
       var passes = completedLevels[examState.lvl] || 0;
       var earned = 0;
       if (passes === 0) earned = addScoreWithLimit(10);
@@ -656,6 +731,21 @@
     showTab(0);
     renderLevelMap();
     updateCouponsUI();
+  }
+  function startMistakesExam() {
+    var pool = allCards.filter(function(c) { return mistakeIds.indexOf(c.id) !== -1; });
+    if (!pool.length) return;
+
+    pool.sort(function() { return 0.5 - Math.random(); });
+    examState.lvl = 'mistakes';
+    examState.questions = pool.slice(0, 15);
+    examState.currIdx = 0;
+    examState.errors = 0;
+    examState.isMistakesMode = true;
+
+    document.getElementById('exam-title').innerText = '🎯 Работа над ошибками';
+    showTab('exam');
+    loadExamQuestion();
   }
 
   function exitExam() {
@@ -709,6 +799,7 @@
     savedCoupons[c.id] = 'redeemed';
     localStorage.setItem('kz_v3_coupons', JSON.stringify(savedCoupons));
     sendTelegramLog("🎁 ВНИМАНИЕ! " + (userName || "Жаным") + " активировала купон: «" + c.title + "»!");
+    launchConfetti(); // <--- САЛЮТ ПРИ АКТИВАЦИИ КУПОНА
     alert("🎉 Купон активирован!\nПокажи этот экран мужу прямо сейчас! ❤️");
     updateCouponsUI();
   }
@@ -794,6 +885,8 @@
   renderLevelMap();
   updateCouponsUI();
   renderCardView();
+  updateMistakesUI();
+
 </script>
 
 </body>
