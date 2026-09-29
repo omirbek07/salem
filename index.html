@@ -159,9 +159,12 @@
   <section class="view" id="view-cards">
     <input type="text" class="modal-input" id="search-bar" style="font-size:0.9rem; padding:12px;" placeholder="🔍 Поиск по словам базы..." oninput="handleSearch()">
     
-    <div style="background:white; border-radius:var(--radius); padding:24px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; text-align:center;">
+    <div style="background:white; border-radius:var(--radius); padding:24px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; text-align:center; position:relative;">
       <span id="c-level-badge" style="align-self:center; background:var(--sage-light); color:var(--sage); font-size:0.75rem; font-weight:800; padding:4px 12px; border-radius:99px;">Уровень 1</span>
       <div id="c-kz" style="font-size:1.6rem; font-weight:800; line-height:1.25;">Қалайсыз?</div>
+      <button onclick="speakCurrentCard()" style="background:#FAF8F5; border:1.5px solid var(--sand); border-radius:99px; padding:6px 14px; font-size:0.85rem; font-weight:700; align-self:center; display:flex; align-items:center; gap:6px;">
+        🔊 Тыңдау (Слушать)
+      </button>
       <div id="c-trans" style="font-size:0.92rem; color:var(--terracotta); font-weight:600;">[Калайсы́з?]</div>
       <div id="c-ru" style="font-size:1.1rem; font-weight:700; color:var(--text-muted);">Как ваши дела?</div>
     </div>
@@ -201,6 +204,7 @@
 
   // Сочный мажорный колокольчик на победу
   function playSuccessSound() {
+    if (navigator.vibrate) navigator.vibrate(35); // Короткий мягкий щелчок
     initAudio();
     if (!audioCtx) return;
 
@@ -233,6 +237,7 @@
 
   // Мягкий глухой звук ошибки
   function playErrorSound() {
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Двойной толчок
     initAudio();
     if (!audioCtx) return;
 
@@ -713,6 +718,15 @@
   // ----------------------------------------------------
   var cardIdx = 0;
   var filteredCards = allCards.slice();
+  function speakCurrentCard() {
+    if (!filteredCards.length || !('speechSynthesis' in window)) return;
+    var text = filteredCards[cardIdx].kz;
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'kk-KZ'; // Казахский язык
+    utter.rate = 0.85;    // Чуть замедленный темп для четкости речи
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
 
   function renderCardView() {
     if (!filteredCards.length) {
