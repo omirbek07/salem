@@ -188,6 +188,71 @@
 <script src="cards.js"></script>
 
 <script>
+    // ----------------------------------------------------
+  // ДОФАМИНОВЫЕ ЗВУКОВЫЕ ЭФФЕКТЫ (Web Audio API)
+  // ----------------------------------------------------
+  var audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  // Сочный мажорный колокольчик на победу
+  function playSuccessSound() {
+    initAudio();
+    if (!audioCtx) return;
+
+    var now = audioCtx.currentTime;
+    
+    // Нота 1 (E6 - 1318 Hz)
+    var osc1 = audioCtx.createOscillator();
+    var gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(1318.5, now);
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Нота 2 (A6 - 1760 Hz) с задержкой 0.08с
+    var osc2 = audioCtx.createOscillator();
+    var gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1760, now + 0.08);
+    gain2.gain.setValueAtTime(0.2, now + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.6);
+  }
+
+  // Мягкий глухой звук ошибки
+  function playErrorSound() {
+    initAudio();
+    if (!audioCtx) return;
+
+    var now = audioCtx.currentTime;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
   // ----------------------------------------------------
   // 1. БЕЗОПАСНЫЙ TELEGRAM-МОНИТОРИНГ
   // ----------------------------------------------------
@@ -408,12 +473,14 @@
     document.querySelectorAll('.opt-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
 
     if (isCorrect) {
+      playSuccessSound();
       if (btn) btn.classList.add('correct');
       setTimeout(function() {
         examState.currIdx++;
         loadExamQuestion();
       }, 600);
     } else {
+      playErrorSound();
       if (btn) btn.classList.add('wrong');
       examState.errors++;
       if (examState.errors > 1) {
