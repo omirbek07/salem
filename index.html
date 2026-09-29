@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Сәлем, Жаным!</title>
+  <title>Сәлем, Жаным! — Академия</title>
   <style>
     :root {
       --bg: #F8F5EE;
@@ -16,6 +16,8 @@
       --sage: #4E816E;
       --sage-light: #E7EFEA;
       --sand: #EFE8DA;
+      --gold: #D97706;
+      --gold-light: #FEF3C7;
       --shadow: 0 4px 16px rgba(44, 38, 35, 0.06);
       --radius: 18px;
     }
@@ -25,23 +27,29 @@
     .app { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 14px; position: relative; }
     button { cursor: pointer; -webkit-appearance: none; }
 
-    /* Модальное окно имени */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(44, 38, 35, 0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
-    .modal-card { background: white; border-radius: var(--radius); padding: 26px 20px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px; }
+    /* Модальное окно */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(44, 38, 35, 0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+    .modal-card { background: white; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px; }
     .modal-input { width: 100%; padding: 14px; border: 2px solid var(--sand); border-radius: 14px; font-size: 1.05rem; font-weight: 700; text-align: center; outline: none; }
     .modal-input:focus { border-color: var(--sage); }
 
     /* Шапка */
-    .header { background: var(--card-bg); padding: 16px 20px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); }
-    .header h1 { font-size: 1.25rem; font-weight: 800; }
-    .header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .header { background: var(--card-bg); padding: 16px 20px; border-radius: var(--radius); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 1.2rem; font-weight: 800; }
+    .header p { font-size: 0.8rem; color: var(--text-muted); }
     
     .stats-row { display: flex; gap: 8px; align-items: center; }
-    .streak-badge { background: #FFF4E5; color: #D97706; font-weight: 800; padding: 6px 12px; border-radius: 99px; font-size: 0.85rem; border: 1px solid #FDE68A; }
-    .xp-badge { background: var(--terracotta-light); color: var(--terracotta); font-weight: 800; padding: 6px 14px; border-radius: 99px; font-size: 0.9rem; }
+    .streak-badge { background: var(--gold-light); color: var(--gold); font-weight: 800; padding: 6px 12px; border-radius: 99px; font-size: 0.82rem; }
+    .xp-badge { background: var(--terracotta-light); color: var(--terracotta); font-weight: 800; padding: 6px 12px; border-radius: 99px; font-size: 0.85rem; }
+
+    .daily-limit-bar { display: flex; flex-direction: column; gap: 4px; }
+    .progress-track { height: 7px; background: var(--sand); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--sage); width: 0%; transition: width 0.3s ease; }
+    .limit-text { font-size: 0.74rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between; }
 
     /* Вкладки */
-    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--sand); padding: 4px; border-radius: 14px; gap: 4px; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--sand); padding: 4px; border-radius: 14px; gap: 4px; }
     .tab-btn { border: none; background: transparent; padding: 11px 0; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); border-radius: 10px; transition: 0.2s; }
     .tab-btn.active { background: white; color: var(--text); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
 
@@ -49,363 +57,501 @@
     .view { display: none; flex-direction: column; gap: 12px; }
     .view.active { display: flex; }
 
-    /* Карточки */
-    .search-input { width: 100%; background: white; border: 1.5px solid var(--sand); padding: 12px 16px; border-radius: 14px; font-size: 0.9rem; outline: none; -webkit-appearance: none; }
-    .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-    .chip { background: white; border: 1.5px solid var(--sand); padding: 8px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
-    .chip.active { background: var(--text); color: white; border-color: var(--text); }
+    /* Карта уровней */
+    .level-node { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); border: 2px solid var(--sand); display: flex; justify-content: space-between; align-items: center; }
+    .level-node.locked { opacity: 0.55; filter: grayscale(0.8); pointer-events: none; }
+    .level-node.boss { border-color: var(--gold); background: #FFFDF9; }
+    .level-info h3 { font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .level-info p { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+    .level-badge { font-size: 0.75rem; font-weight: 800; padding: 5px 10px; border-radius: 8px; background: var(--sand); color: var(--text-muted); text-align: center; }
+    .level-node.completed .level-badge { background: var(--sage-light); color: var(--sage); }
 
-    .card-box { background: white; border-radius: var(--radius); padding: 26px 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
-    .badge { align-self: flex-start; background: var(--sage-light); color: var(--sage); font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; }
-    .kz-text { font-size: 1.7rem; font-weight: 800; text-align: center; color: var(--text); line-height: 1.25; margin-top: 4px; }
-    .trans-text { font-size: 0.95rem; color: var(--terracotta); font-weight: 600; text-align: center; }
+    /* Экзамен */
+    .exam-box { background: white; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
+    .exam-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--sand); padding-bottom: 10px; }
+    .timer-badge { font-weight: 800; font-size: 0.95rem; color: var(--terracotta); }
+    .lives-badge { font-weight: 800; font-size: 0.95rem; color: #DC2626; }
 
-    .translation-drawer { display: none; background: #FDFAF6; border: 1.5px dashed var(--sand); padding: 16px; border-radius: 14px; text-align: center; }
-    .translation-drawer.show { display: block; animation: fadeIn 0.2s ease; }
-    .ru-text { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
-    .ctx-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.35; }
-
-    .btn-main { background: var(--sage); color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.92rem; font-weight: 700; transition: 0.15s; }
-    .btn-main:active { transform: scale(0.98); }
-    .nav-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
-    .btn-nav { flex: 1; background: white; border: 1.5px solid var(--sand); padding: 12px; border-radius: 14px; font-size: 0.88rem; font-weight: 700; }
-
-    /* Тренажер */
-    .trainer-card { background: white; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
-    .trainer-header { display: flex; justify-content: space-between; align-items: center; }
-    .trainer-type-badge { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; background: #FAF8F5; color: var(--text-muted); border: 1px solid var(--sand); }
-    .multiplier-tag { font-size: 0.78rem; font-weight: 800; color: #D97706; }
-
-    .trainer-prompt { font-size: 1.25rem; font-weight: 800; line-height: 1.35; color: var(--text); }
-    .trainer-hint { font-size: 0.85rem; color: var(--text-muted); }
-
-    .options-grid { display: flex; flex-direction: column; gap: 10px; }
-    .opt-btn { background: #FAF8F5; border: 1.5px solid var(--sand); padding: 15px 16px; border-radius: 14px; font-size: 0.95rem; font-weight: 600; text-align: left; color: var(--text); }
+    .opt-btn { background: #FAF8F5; border: 1.5px solid var(--sand); padding: 14px 16px; border-radius: 14px; font-size: 0.95rem; font-weight: 600; text-align: left; color: var(--text); }
     .opt-btn.correct { background: var(--sage-light); border-color: var(--sage); color: var(--sage); font-weight: 700; }
     .opt-btn.wrong { background: var(--terracotta-light); border-color: var(--terracotta); color: var(--terracotta); font-weight: 700; }
 
-    .build-area { min-height: 58px; background: #FAF8F5; border: 2px dashed var(--sand); border-radius: 14px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-    .word-chip { background: white; border: 1.5px solid var(--sand); padding: 10px 14px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
-    .word-chip.used { opacity: 0.3; pointer-events: none; border-style: dashed; }
-
-    .input-box { display: flex; flex-direction: column; gap: 12px; }
-    .fill-input { width: 100%; background: #FAF8F5; border: 2px solid var(--sand); padding: 14px; border-radius: 14px; font-size: 1.1rem; font-weight: 700; text-align: center; outline: none; -webkit-appearance: none; }
-    .fill-input:focus { border-color: var(--sage); background: white; }
-
-    .feedback-box { display: none; padding: 12px 14px; border-radius: 12px; font-size: 0.9rem; font-weight: 700; text-align: center; animation: fadeIn 0.2s; }
-    .feedback-box.correct { display: block; background: var(--sage-light); color: var(--sage); }
-    .feedback-box.wrong { display: block; background: var(--terracotta-light); color: var(--terracotta); }
-
     /* Купоны */
-    .coupons-list { display: flex; flex-direction: column; gap: 12px; }
-    .coupon-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; border: 1.5px solid var(--sand); position: relative; }
-    .coupon-card.unlocked { border-color: #FBBF24; background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF7 100%); }
-    .coupon-card.redeemed { opacity: 0.6; filter: grayscale(0.5); }
-    
-    .coupon-header { display: flex; justify-content: space-between; align-items: center; }
-    .coupon-title { font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-    .coupon-cost { font-size: 0.85rem; font-weight: 800; color: var(--terracotta); background: var(--terracotta-light); padding: 4px 10px; border-radius: 99px; }
-    .coupon-desc { font-size: 0.86rem; color: var(--text-muted); line-height: 1.4; }
+    .coupon-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; border: 1.5px solid var(--sand); }
+    .coupon-card.unlocked { border-color: var(--gold); background: #FFFDF9; }
+    .coupon-card.redeemed { opacity: 0.55; }
+    .btn-main { background: var(--sage); color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.92rem; font-weight: 700; transition: 0.15s; }
+    .btn-main:active { transform: scale(0.98); }
     .btn-coupon { background: var(--sand); border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: not-allowed; color: var(--text-muted); }
-    .btn-coupon.active { background: #D97706; color: white; cursor: pointer; }
-    .btn-coupon.used { background: #E5E7EB; color: #9CA3AF; cursor: default; }
-
-    /* Диалоги */
-    .scen-picker { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-    .scen-tab { background: white; border: 1.5px solid var(--sand); padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
-    .scen-tab.active { background: var(--sage); color: white; border-color: var(--sage); }
-    .chat-box { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
-    .bubble { max-width: 84%; padding: 11px 15px; border-radius: 16px; font-size: 0.92rem; line-height: 1.35; animation: fadeIn 0.2s ease; }
-    .bubble.them { background: #F2EDE4; align-self: flex-start; border-bottom-left-radius: 4px; }
-    .bubble.me { background: var(--sage); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+    .btn-coupon.active { background: var(--gold); color: white; cursor: pointer; }
   </style>
 </head>
 <body>
 
 <div class="app">
-  <!-- ВСПЛЫВАЮЩЕЕ ОКНО РЕГИСТРАЦИИ ИМЕНИ -->
+  <!-- МОДАЛКА ВВОДА ИМЕНИ -->
   <div class="modal-overlay" id="name-modal">
     <div class="modal-card">
       <h2 style="font-size:1.3rem; font-weight:800;">Қош келдіңіз! 👋</h2>
-      <p style="font-size:0.86rem; color:var(--text-muted);">Введи своё имя, чтобы сохранять баллы и серии тренировок:</p>
+      <p style="font-size:0.86rem; color:var(--text-muted);">Введи своё имя, чтобы запустить программу академии:</p>
       <input type="text" class="modal-input" id="user-name-input" placeholder="Твоё имя...">
-      <button class="btn-main" onclick="submitUserName()">Начать обучение 🚀</button>
+      <button class="btn-main" onclick="submitUserName()">Поступить в Академию 🎓</button>
     </div>
   </div>
 
+  <!-- ШАПКА -->
   <header class="header">
-    <div>
-      <h1>Сәлем, Жаным!</h1>
-      <p id="user-greeting">Казахский для дома и жизни</p>
+    <div class="header-top">
+      <div>
+        <h1>Сәлем, Жаным!</h1>
+        <p id="user-greeting">Казахский: Академия</p>
+      </div>
+      <div class="stats-row">
+        <div class="streak-badge" id="streak-indicator">🔥 1 день (+5)</div>
+        <div class="xp-badge">⭐ <span id="score">0</span></div>
+      </div>
     </div>
-    <div class="stats-row">
-      <div class="streak-badge" id="streak-indicator">🔥 0</div>
-      <div class="xp-badge">⭐ <span id="score">0</span></div>
+    
+    <div class="daily-limit-bar">
+      <div class="limit-text">
+        <span>Дневная норма очков:</span>
+        <span><strong id="daily-earned">0</strong> / 50 ⭐</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="daily-progress"></div>
+      </div>
     </div>
   </header>
 
+  <!-- НАВИГАЦИЯ -->
   <nav class="tabs">
-    <button class="tab-btn active" id="tab0" onclick="showTab(0)">Карточки</button>
-    <button class="tab-btn" id="tab1" onclick="showTab(1)">Тренажер</button>
-    <button class="tab-btn" id="tab2" onclick="showTab(2)">Купоны 🎁</button>
-    <button class="tab-btn" id="tab3" onclick="showTab(3)">Диалоги</button>
+    <button class="tab-btn active" id="tab0" onclick="showTab(0)">Карта уровней</button>
+    <button class="tab-btn" id="tab1" onclick="showTab(1)">Словарь</button>
+    <button class="tab-btn" id="tab2" onclick="showTab(2)">Награды 🎁</button>
   </nav>
 
-  <!-- ВКЛАДКА 1: КАРТОЧКИ -->
-  <section class="view active" id="view-cards">
-    <input type="text" class="search-input" id="search-bar" placeholder="🔍 Найти слово или перевод..." oninput="handleSearch()">
+  <!-- ВКЛАДКА 0: КАРТА УРОВНЕЙ -->
+  <section class="view active" id="view-map">
+    <div id="level-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </section>
 
-    <div class="chips">
-      <button class="chip active" onclick="setFilter('all', this)">Все (104)</button>
-      <button class="chip" onclick="setFilter('table', this)">☕ Дастарқан & Шай</button>
-      <button class="chip" onclick="setFilter('me', this)">🌱 О себе & Желания</button>
-      <button class="chip" onclick="setFilter('kitchen', this)">🍳 Кухня & Уборка</button>
-      <button class="chip" onclick="setFilter('chat', this)">💬 Общение & Забота</button>
-      <button class="chip" onclick="setFilter('phone', this)">📱 Телефон</button>
-      <button class="chip" onclick="setFilter('city', this)">🛍️ Город & Магазин</button>
-      <button class="chip" onclick="setFilter('guest', this)">🎉 Гости & Праздники</button>
-    </div>
-
-    <div class="card-box">
-      <span class="badge" id="c-cat">Категория</span>
-      <div class="kz-text" id="c-kz">Қалайсыз?</div>
-      <div class="trans-text" id="c-trans">[Калайсы́з?]</div>
-
-      <div class="translation-drawer" id="c-drawer">
-        <div class="ru-text" id="c-ru">Как вы? / Как ваши дела?</div>
-        <div class="ctx-text" id="c-ctx">Теплое приветствие для родителей и старших.</div>
+  <!-- ЭКРАН ЭКЗАМЕНА -->
+  <section class="view" id="view-exam">
+    <div class="exam-box">
+      <div class="exam-top">
+        <div>
+          <h2 id="exam-title" style="font-size:1.05rem; font-weight:800;">Экзамен Уровня</h2>
+          <span id="exam-q-count" style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Вопрос 1 / 10</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="timer-badge" id="exam-timer">⏱️ 15с</div>
+          <div class="lives-badge" id="exam-lives">❤️ 1 жизнь</div>
+        </div>
       </div>
 
-      <button class="btn-main" id="btn-toggle" onclick="toggleTranslation()">Показать перевод 👀</button>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn-nav" onclick="stepCard(-1)">← Назад</button>
-      <span id="c-count" style="font-size:0.85rem; color:#7E746D; font-weight:700;">1 / 104</span>
-      <button class="btn-nav" onclick="stepCard(1)">Вперед →</button>
+      <div id="exam-prompt" style="font-size:1.25rem; font-weight:800; line-height:1.35; margin:8px 0;">Загрузка...</div>
+      <div id="exam-options" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <button class="btn-main" style="background:#FAF8F5; color:var(--text); border:1.5px solid var(--sand); margin-top:6px;" onclick="exitExam()">Сдаться и выйти</button>
     </div>
   </section>
 
-  <!-- ВКЛАДКА 2: ТРЕНАЖЕР -->
-  <section class="view" id="view-quiz">
-    <div class="trainer-card">
-      <div class="trainer-header">
-        <span class="trainer-type-badge" id="task-badge">Тип задания</span>
-        <span class="multiplier-tag" id="task-mult">Серия: х1</span>
-      </div>
+  <!-- ВКЛАДКА 1: БРАУЗЕР КАРТОЧЕК ИЗ CARDS.JS -->
+  <section class="view" id="view-cards">
+    <input type="text" class="modal-input" id="search-bar" style="font-size:0.9rem; padding:12px;" placeholder="🔍 Поиск по словам базы..." oninput="handleSearch()">
+    
+    <div style="background:white; border-radius:var(--radius); padding:24px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; text-align:center;">
+      <span id="c-level-badge" style="align-self:center; background:var(--sage-light); color:var(--sage); font-size:0.75rem; font-weight:800; padding:4px 12px; border-radius:99px;">Уровень 1</span>
+      <div id="c-kz" style="font-size:1.6rem; font-weight:800; line-height:1.25;">Қалайсыз?</div>
+      <div id="c-trans" style="font-size:0.92rem; color:var(--terracotta); font-weight:600;">[Калайсы́з?]</div>
+      <div id="c-ru" style="font-size:1.1rem; font-weight:700; color:var(--text-muted);">Как ваши дела?</div>
+    </div>
 
-      <div class="trainer-prompt" id="task-prompt">Загрузка задания...</div>
-      <div class="trainer-hint" id="task-hint">Подсказка</div>
-
-      <div id="task-body"></div>
-      <div class="feedback-box" id="feedback"></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(-1)">← Назад</button>
+      <span id="c-count" style="font-size:0.85rem; font-weight:700; color:var(--text-muted); white-space:nowrap;">1 / 0</span>
+      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(1)">Вперед →</button>
     </div>
   </section>
 
-  <!-- ВКЛАДКА 3: КУПОНЫ -->
+  <!-- ВКЛАДКА 2: КУПОНЫ -->
   <section class="view" id="view-coupons">
     <div style="background:white; padding:16px 20px; border-radius:var(--radius); box-shadow:var(--shadow);">
-      <div style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Твой баланс</div>
-      <div style="font-size:1.6rem; font-weight:800; color:var(--terracotta); margin:4px 0;" id="coupon-balance">0 ⭐</div>
-      <div style="font-size:0.85rem; color:var(--text-muted);">Копи баллы за правильные ответы и активируй подарки от мужа!</div>
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Твой баланс</div>
+      <div style="font-size:1.6rem; font-weight:800; color:var(--terracotta); margin:2px 0;" id="coupon-balance">0 ⭐</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">Каждая награда требует баланса очков и сдачи определённого уровня!</div>
     </div>
-
-    <div class="coupons-list" id="coupons-container"></div>
-  </section>
-
-  <!-- ВКЛАДКА 4: ДИАЛОГИ -->
-  <section class="view" id="view-dialogue">
-    <div class="scen-picker">
-      <button class="scen-tab active" id="scen-tab-0" onclick="pickScenario(0)">☕ Уютный чай</button>
-      <button class="scen-tab" id="scen-tab-1" onclick="pickScenario(1)">📱 Звонок мамы</button>
-      <button class="scen-tab" id="scen-tab-2" onclick="pickScenario(2)">🍳 Помощь на кухне</button>
-    </div>
-
-    <div class="chat-box">
-      <div id="scen-title" style="font-weight:700; font-size:0.9rem; color:#7E746D; border-bottom:1px solid var(--sand); padding-bottom:6px;">
-        Разговор за дастарханом
-      </div>
-      <div id="chat-flow" style="display:flex; flex-direction:column; gap:8px;"></div>
-      <div id="chat-actions" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;"></div>
-    </div>
+    <div id="coupons-list" style="display:flex; flex-direction:column; gap:12px;"></div>
   </section>
 </div>
 
+<!-- ПОДКЛЮЧЕНИЕ ВНЕШНЕГО ФАЙЛА КАРТОЧЕК -->
+<script src="cards.js"></script>
+
 <script>
-  // БАЗА ДАННЫХ (104 карточки)
-  var data = [
-    // 1. ДАСТАРҚАН ЖӘНЕ ШАЙ (20)
-    { id: 1, kz: "Шай ішейікші!", trans: "[Шай ишейикши́!]", ru: "Давайте попьем чайку!", cat: "table", catName: "Дастарқан & Шай", ctx: "Уютный призыв собраться за столом." },
-    { id: 2, kz: "Шай өте тәтті екен", trans: "[Шай оте тятти́ екен]", ru: "Чай очень вкусный", cat: "table", catName: "Дастарқан & Шай", ctx: "Комплимент тому, кто разливал чай." },
-    { id: 3, kz: "Су беріңізші", trans: "[Су берини́зши]", ru: "Дайте, пожалуйста, воду", cat: "table", catName: "Дастарқан & Шай", ctx: "Вежливая просьба за столом." },
-    { id: 4, kz: "Нан алып жіберіңізші", trans: "[Нан альп жиберини́зши]", ru: "Передайте, пожалуйста, хлеб", cat: "table", catName: "Дастарқан & Шай", ctx: "Когда хлебница стоит далеко." },
-    { id: 5, kz: "Маған сәл ғана құйыңызшы", trans: "[Маган сял ғана куйыны́зшы]", ru: "Налейте мне совсем чуть-чуть", cat: "table", catName: "Дастарқан & Шай", ctx: "Когда чай уже не помещается, но не хочется обижать." },
-    { id: 6, kz: "Дәмді екен!", trans: "[Дямди́ екен!]", ru: "Как же вкусно!", cat: "table", catName: "Дастарқан & Шай", ctx: "Универсальная похвала любому блюду." },
-    { id: 7, kz: "Асыңыз дәмді болсын!", trans: "[Асыны́з дямди́ болсын!]", ru: "Приятного аппетита!", cat: "table", catName: "Дастарқан & Шай", ctx: "Пожелание перед началом еды." },
-    { id: 8, kz: "Ас болсын!", trans: "[Ас болсы́н!]", ru: "На здоровье! / Приятного аппетита", cat: "table", catName: "Дастарқан & Шай", ctx: "Ответ на благодарность за еду." },
-    { id: 9, kz: "Қолыңызға дерт бермесін", trans: "[Колынызга́ дерт бермеси́н]", ru: "Пусть ваши руки не знают боли!", cat: "table", catName: "Дастарқан & Шай", ctx: "Трогательная благодарность за еду." },
-    { id: 10, kz: "Тұз беріп жіберіңізші", trans: "[Туз бери́п жиберини́зши]", ru: "Передайте соль, пожалуйста", cat: "table", catName: "Дастарқан & Шай", ctx: "Просьба передать солонку." },
-    { id: 11, kz: "Қант бар ма?", trans: "[Кант бар ма?]", ru: "Есть сахар?", cat: "table", catName: "Дастарқан & Шай", ctx: "Спросить про сахар к чаю." },
-    { id: 12, kz: "Қайнаған су бар ма?", trans: "[Кайнага́н су бар ма?]", ru: "Есть кипяток?", cat: "table", catName: "Дастарқан & Шай", ctx: "Попросить кипяток разбавить чай." },
-    { id: 13, kz: "Сүт қосасыз ба?", trans: "[Сют косасы́з ба?]", ru: "Добавите молоко?", cat: "table", catName: "Дастарқан & Шай", ctx: "Спросить, нужен ли чай с молоком." },
-    { id: 14, kz: "Май қайда екен?", trans: "[Май кайда́ екен?]", ru: "Где сливочное масло?", cat: "table", catName: "Дастарқан & Шай", ctx: "Поиск масла на столе." },
-    { id: 15, kz: "Майлық беріңізші", trans: "[Майлы́к берини́зши]", ru: "Дайте салфетку, пожалуйста", cat: "table", catName: "Дастарқан & Шай", ctx: "Попросить салфетку." },
-    { id: 16, kz: "Бауырсақ өте жұмсақ екен", trans: "[Бауырса́к оте жумса́к екен]", ru: "Баурсаки такие мягкие!", cat: "table", catName: "Дастарқан & Шай", ctx: "Комплимент домашней выпечке." },
-    { id: 17, kz: "Тағы да шай құяйын ба?", trans: "[Тагы́ да шай куяйы́н ба?]", ru: "Налить вам ещё чаю?", cat: "table", catName: "Дастарқан & Шай", ctx: "Забота о старших за столом." },
-    { id: 18, kz: "Жеміс жейсіз бе?", trans: "[Жеми́с жейси́з бе?]", ru: "Будете фрукты?", cat: "table", catName: "Дастарқан & Шай", ctx: "Предложить фрукты после обеда." },
-    { id: 19, kz: "Ас өте тойымды болды", trans: "[Ас оте тойымды́ болды]", ru: "Ужин был очень сытным", cat: "table", catName: "Дастарқан & Шай", ctx: "Благодарность за богатый стол." },
-    { id: 20, kz: "Рақмет, бәрі дәмді болды", trans: "[Рахме́т, бяри́ дямди́ болды]", ru: "Спасибо, всё было очень вкусно", cat: "table", catName: "Дастарқан & Шай", ctx: "Сказать, встав из-за стола." },
-
-    // 2. О СЕБЕ & ЖЕЛАНИЯ (18)
-    { id: 21, kz: "Шай ішкім келіп тұр", trans: "[Шай ишким келип тур]", ru: "Хочу выпить чаю", cat: "me", catName: "О себе", ctx: "Когда хочется попить чаю дома." },
-    { id: 22, kz: "Қарным ашты", trans: "[Карны́м ашты́]", ru: "Я проголодалась", cat: "me", catName: "О себе", ctx: "Сказать, что пора подкрепиться." },
-    { id: 23, kz: "Мен сәл шаршадым", trans: "[Мен сял шаршады́м]", ru: "Я немного устала", cat: "me", catName: "О себе", ctx: "«Сәл» перед глаголом. Сказать о самочувствии." },
-    { id: 24, kz: "Басым сәл ауырып тұр", trans: "[Басы́м сял ауыры́п тур]", ru: "Немного болит голова", cat: "me", catName: "О себе", ctx: "Объяснить причину тишины." },
-    { id: 25, kz: "Сәл демалып алайыншы", trans: "[Сял демалы́п алайыншы́]", ru: "Я немного прилягу / отдохну", cat: "me", catName: "О себе", ctx: "Предупредить, что хочется отдохнуть." },
-    { id: 26, kz: "Ұйқым келіп тұр", trans: "[Уйкы́м келип тур]", ru: "Я хочу спать", cat: "me", catName: "О себе", ctx: "Сказать перед сном." },
-    { id: 27, kz: "Тойдым, рақмет!", trans: "[Тойды́м, рахмет!]", ru: "Я наелась, спасибо!", cat: "me", catName: "О себе", ctx: "Когда предлагают добавки, а мест нет." },
-    { id: 28, kz: "Су ішкім келіп тұр", trans: "[Су ишким келип тур]", ru: "Хочу пить воду", cat: "me", catName: "О себе", ctx: "Попросить стакан воды." },
-    { id: 29, kz: "Сәл тоңып қалдым", trans: "[Сял тоны́п калдым]", ru: "Я немного замерзла", cat: "me", catName: "О себе", ctx: "Попросить плед или прикрыть окно." },
-    { id: 30, kz: "Маған сәл ыстық болып кетті", trans: "[Маган сял ысты́к болып кетти]", ru: "Мне стало немного жарковато", cat: "me", catName: "О себе", ctx: "Когда в комнате душно." },
-    { id: 31, kz: "Сәл тұмауратып тұрмын", trans: "[Сял тумаураты́п турмын]", ru: "Я немного простудилась", cat: "me", catName: "О себе", ctx: "Если появилась легкая слабость." },
-    { id: 32, kz: "Кофе ішкім келеді", trans: "[Кофе ишким келеди]", ru: "Хочется кофе", cat: "me", catName: "О себе", ctx: "Утреннее желание кофе." },
-    { id: 33, kz: "Көңіл-күйім жақсы", trans: "[Конил-кюйи́м жаксы́]", ru: "У меня отличное настроение", cat: "me", catName: "О себе", ctx: "Поделиться бодрым настроем." },
-    { id: 34, kz: "Жұмысымды бітіріп алайын", trans: "[Жумысымды́ битири́п алайын]", ru: "Я закончу свои дела / работу", cat: "me", catName: "О себе", ctx: "Попросить 10 минут закончить дело." },
-    { id: 35, kz: "Далаға шығып келейікші", trans: "[Далага́ шыгы́п келейикши́]", ru: "Давайте выйдем прогуляемся", cat: "me", catName: "О себе", ctx: "Предложить подышать воздухом." },
-    { id: 36, kz: "Маған бұл өте ұнады", trans: "[Маган бул оте унады́]", ru: "Мне это очень понравилось", cat: "me", catName: "О себе", ctx: "Восторг от блюда или места." },
-    { id: 37, kz: "Қолым бос қазір", trans: "[Колы́м бос кази́р]", ru: "Я свободна сейчас", cat: "me", catName: "О себе", ctx: "Готова помочь или поболтать." },
-    { id: 38, kz: "Қазір келемін", trans: "[Кази́р келеми́н]", ru: "Я сейчас приду / отойду на минутку", cat: "me", catName: "О себе", ctx: "Предупредить, что отлучилась." },
-
-    // 3. КУХНЯ & УБОРКА (16)
-    { id: 39, kz: "Көмек керек пе?", trans: "[Коме́к кере́к пе?]", ru: "Нужна помощь?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Заботливо спросить на кухне." },
-    { id: 40, kz: "Ыдыс жуайын ба?", trans: "[Ыды́с жуайы́н ба?]", ru: "Помыть посуду?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Предложить помыть тарелки." },
-    { id: 41, kz: "Пышақ қайда жатыр?", trans: "[Пыша́к кайда́ жатыр?]", ru: "Где лежит нож?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Поиск приборов во время готовки." },
-    { id: 42, kz: "Тақтайша қайда екен?", trans: "[Тактайша́ кайда́ екен?]", ru: "Где разделочная доска?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Найти доску для нарезки." },
-    { id: 43, kz: "Мен көкөністерді турайын", trans: "[Мен коконистерди́ турайы́н]", ru: "Я нарежу овощи", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Помочь нарезать салат." },
-    { id: 44, kz: "Шәйнек қайнады", trans: "[Шайне́к кайнады́]", ru: "Чайник закипел", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Сказать, что вода готова." },
-    { id: 45, kz: "Шәйнекті қояйын ба?", trans: "[Шайнекти́ кояйы́н ба?]", ru: "Поставить чайник?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Предложить согреть чай." },
-    { id: 46, kz: "Үстелді сүртейін", trans: "[Устелди́ сюртейи́н]", ru: "Я протру стол", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Убрать со стола после чая." },
-    { id: 47, kz: "Тоңазытқышқа салып қояйын ба?", trans: "[Тоназыткышка́ салып кояйы́н ба?]", ru: "Убрать это в холодильник?", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Спрятать оставшуюся еду." },
-    { id: 48, kz: "Қоқысты шығарып тастайын", trans: "[Кокысты́ шыгары́п тастайы́н]", ru: "Я вынесу мусор", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Выбросить мусорный пакет." },
-    { id: 49, kz: "Маған көмектесіп жіберші", trans: "[Маган комектеси́п жиберши́]", ru: "Помоги мне, пожалуйста", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Попросить помочь." },
-    { id: 50, kz: "Сүт бітіп қалыпты", trans: "[Сют бити́п калыпты]", ru: "Молоко закончилось", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Заметить нехватку продуктов." },
-    { id: 51, kz: "Нан таусылыпты", trans: "[Нан таусылы́пты]", ru: "Хлеб закончился", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Записать хлеб в список." },
-    { id: 52, kz: "Тамақ дайын болды!", trans: "[Тама́к дайы́н болды!]", ru: "Еда готова!", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Позвать всех к столу." },
-    { id: 53, kz: "Ыстық, абайлаңыз!", trans: "[Ысты́к, абайланы́з!]", ru: "Осторожно, горячо!", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Предупредить у горячей плиты." },
-    { id: 54, kz: "Бәрін жинап қойдым", trans: "[Бяри́н жина́п койдым]", ru: "Я всё убрала", cat: "kitchen", catName: "Кухня & Уборка", ctx: "Сказать, что порядок наведен." },
-
-    // 4. ОБЩЕНИЕ & ЗАБОТА (15)
-    { id: 55, kz: "Қалайсыз?", trans: "[Калайсы́з?]", ru: "Как вы? / Как дела?", cat: "chat", catName: "Общение", ctx: "Естественное приветствие для родителей." },
-    { id: 56, kz: "Өзіңіз қалайсыз?", trans: "[Озини́з калайсы́з?]", ru: "А вы сами как?", cat: "chat", catName: "Общение", ctx: "Встречный вопрос собеседнику." },
-    { id: 57, kz: "Денсаулығыңыз қалай?", trans: "[Денсаулыгыны́з калай?]", ru: "Как ваше здоровье?", cat: "chat", catName: "Общение", ctx: "Заботливый вопрос старшим." },
-    { id: 58, kz: "Жарайды / Әрине", trans: "[Жарайды́ / Арине́]", ru: "Хорошо / Конечно!", cat: "chat", catName: "Общение", ctx: "Быстрые слова согласия." },
-    { id: 59, kz: "Жаным", trans: "[Жаны́м]", ru: "Душа моя (милый / дорогая)", cat: "chat", catName: "Общение", ctx: "Ласковое обращение к мужу." },
-    { id: 60, kz: "Жұмысың қалай өтті?", trans: "[Жумысы́н калай отти́?]", ru: "Как прошел рабочий день?", cat: "chat", catName: "Общение", ctx: "Встретить мужа с работы." },
-    { id: 61, kz: "Келдің бе, жаным?", trans: "[Келди́н бе, жаны́м?]", ru: "Пришел, дорогой?", cat: "chat", catName: "Общение", ctx: "Встретить у порога." },
-    { id: 62, kz: "Бәрі жақсы болады", trans: "[Бяри́ жаксы́ болады]", ru: "Всё будет хорошо", cat: "chat", catName: "Общение", ctx: "Поддержка близкому." },
-    { id: 63, kz: "Алаңдамаңызшы", trans: "[Аландаманы́зшы]", ru: "Не переживайте, пожалуйста", cat: "chat", catName: "Общение", ctx: "Успокоить маму." },
-    { id: 64, kz: "Күніңіз қалай өтті?", trans: "[Кюнини́з калай отти́?]", ru: "Как прошел ваш день?", cat: "chat", catName: "Общение", ctx: "Вечерний интерес к родителям." },
-    { id: 65, kz: "Сәлем айтыңыз!", trans: "[Сяле́м айтыны́з!]", ru: "Передавайте привет!", cat: "chat", catName: "Общение", ctx: "Прощание с родственниками." },
-    { id: 66, kz: "Көріскенше!", trans: "[Корискенше́!]", ru: "До скорой встречи!", cat: "chat", catName: "Общение", ctx: "Дружеское прощание." },
-    { id: 67, kz: "Кеш жарық!", trans: "[Кеш жары́к!]", ru: "Добрый вечер!", cat: "chat", catName: "Общение", ctx: "Вечернее приветствие." },
-    { id: 68, kz: "Қайырлы таң!", trans: "[Кайырлы́ тан!]", ru: "Доброе утро!", cat: "chat", catName: "Общение", ctx: "Приветствие утром." },
-    { id: 69, kz: "Қайырлы түн!", trans: "[Кайырлы́ тюн!]", ru: "Спокойной ночи!", cat: "chat", catName: "Общение", ctx: "Пожелание добрых снов." },
-
-    // 5. ТЕЛЕФОН (11)
-    { id: 70, kz: "Иә, тыңдап тұрмын", trans: "[Ия, тында́п турмын]", ru: "Да, слушаю вас", cat: "phone", catName: "Телефон", ctx: "Вежливый ответ в трубку." },
-    { id: 71, kz: "Қазір телефонды беремін", trans: "[Кази́р телефонды́ береми́н]", ru: "Сейчас передам трубку", cat: "phone", catName: "Телефон", ctx: "Когда звонят мужу." },
-    { id: 72, kz: "Бәрі жақсы бізде", trans: "[Бяри́ жаксы́ бизде]", ru: "У нас всё хорошо", cat: "phone", catName: "Телефон", ctx: "Ответ на звонок родителей." },
-    { id: 73, kz: "Дауысыңыз сәл естілмей қалды", trans: "[Дауысыны́з сял естилме́й калды]", ru: "Вас немного не слышно (связь)", cat: "phone", catName: "Телефон", ctx: "Если пропадает связь." },
-    { id: 74, kz: "Үйге келе жатырмыз", trans: "[Уйге́ келе́ жатырмыз]", ru: "Мы едем домой", cat: "phone", catName: "Телефон", ctx: "Предупредить семью о возвращении." },
-    { id: 75, kz: "Жеткенде хабарласамын", trans: "[Жеткенде́ хабарласамы́н]", ru: "Позвоню, как доеду", cat: "phone", catName: "Телефон", ctx: "Успокоить перед дорогой." },
-    { id: 76, kz: "Қайта соғамын қазір", trans: "[Кайта́ согамы́н кази́р]", ru: "Я перезвоню прямо сейчас", cat: "phone", catName: "Телефон", ctx: "Если заняты руки." },
-    { id: 77, kz: "Мазалағаныма кешіріңіз", trans: "[Мазалаганыма́ кеширини́з]", ru: "Извините за беспокойство", cat: "phone", catName: "Телефон", ctx: "Вежливое начало звонка." },
-    { id: 78, kz: "Жарайды, сау болыңыз!", trans: "[Жарайды́, сау болыны́з!]", ru: "Хорошо, до свидания!", cat: "phone", catName: "Телефон", ctx: "Теплое завершение звонка со старшими." },
-    { id: 79, kz: "Бәріне сәлем айтыңыз!", trans: "[Бярине́ сяле́м айтыны́з!]", ru: "Всем передавайте привет!", cat: "phone", catName: "Телефон", ctx: "Перед тем как положить трубку." },
-    { id: 80, kz: "Кейін сөйлесейікші", trans: "[Кейи́н сойлесейикши́]", ru: "Давайте поговорим чуть позже", cat: "phone", catName: "Телефон", ctx: "Если сейчас некогда." },
-
-    // 6. ГОРОД & МАГАЗИН (14)
-    { id: 81, kz: "Бір капучино, өтініш", trans: "[Бир капучино, отини́ш]", ru: "Один капучино, пожалуйста", cat: "city", catName: "Город & Магазин", ctx: "Заказ в кофейне." },
-    { id: 82, kz: "Қантсыз болсыншы", trans: "[Кантсы́з болсыншы]", ru: "Пусть будет без сахара", cat: "city", catName: "Город & Магазин", ctx: "Уточнить детали заказа." },
-    { id: 83, kz: "Картамен төлеуге бола ма?", trans: "[Картаме́н толеуге́ бола ма?]", ru: "Можно оплатить картой?", cat: "city", catName: "Город & Магазин", ctx: "В магазине или такси." },
-    { id: 84, kz: "Қанша тұрады?", trans: "[Канша́ турады?]", ru: "Сколько это стоит?", cat: "city", catName: "Город & Магазин", ctx: "Узнать цену товара." },
-    { id: 85, kz: "Пакет керек емес, рақмет", trans: "[Паке́т кере́к емес, рахмет]", ru: "Пакет не нужен, спасибо", cat: "city", catName: "Город & Магазин", ctx: "Стандартный ответ на кассе." },
-    { id: 86, kz: "Қайтым бар ма?", trans: "[Кайты́м бар ма?]", ru: "Сдача есть?", cat: "city", catName: "Город & Магазин", ctx: "При оплате наличными." },
-    { id: 87, kz: "Міне, алыңыз", trans: "[Мине́, алыны́з]", ru: "Вот, возьмите", cat: "city", catName: "Город & Магазин", ctx: "Протянуть вещь или купюру." },
-    { id: 88, kz: "Чек керек емес", trans: "[Чек кере́к емес]", ru: "Чек не нужен", cat: "city", catName: "Город & Магазин", ctx: "Отказ от бумажного чека." },
-    { id: 89, kz: "Осында тоқтап кетіңізші", trans: "[Осында́ токта́п кетини́зши]", ru: "Остановите здесь, пожалуйста", cat: "city", catName: "Город & Магазин", ctx: "Просьба в такси." },
-    { id: 90, kz: "Көмектесіп жібересіз бе?", trans: "[Комектеси́п жибереси́з бе?]", ru: "Вы мне поможете?", cat: "city", catName: "Город & Магазин", ctx: "Обратиться к консультанту." },
-    { id: 91, kz: "Сүт қай бөлімде?", trans: "[Сют кай боли́мде?]", ru: "В каком отделе молоко?", cat: "city", catName: "Город & Магазин", ctx: "Поиск в супермаркете." },
-    { id: 92, kz: "Жаңа піскен бе?", trans: "[Жана́ пискен бе?]", ru: "Это свежевыпеченное?", cat: "city", catName: "Город & Магазин", ctx: "Спросить про выпечку." },
-    { id: 93, kz: "Кешіріңіз, өтіп кетейінші", trans: "[Кеширини́з, оти́п кетейинши́]", ru: "Извините, разрешите пройти", cat: "city", catName: "Город & Магазин", ctx: "В проходе или автобусе." },
-    { id: 94, kz: "Күніңіз сәтті өтсін!", trans: "[Кюнини́з сятти́ отсин!]", ru: "Хорошего вам дня!", cat: "city", catName: "Город & Магазин", ctx: "Пожелание бариста или кассиру." },
-
-    // 7. ГОСТИ & ПРАЗДНИКИ (10)
-    { id: 95, kz: "Қош келдіңіздер!", trans: "[Кош келдинизде́р!]", ru: "Добро пожаловать!", cat: "guest", catName: "Гости & Праздники", ctx: "Встретить гостей на пороге." },
-    { id: 96, kz: "Төрлетіңіздер!", trans: "[Торлетинизде́р!]", ru: "Проходите на почётное место!", cat: "guest", catName: "Гости & Праздники", ctx: "Пригласить гостей в комнату к столу." },
-    { id: 97, kz: "Құтты болсын!", trans: "[Кутты́ болсы́н!]", ru: "Поздравляю! Пусть будет во благо!", cat: "guest", catName: "Гости & Праздники", ctx: "Универсальное поздравление." },
-    { id: 98, kz: "Әумин, айтқаныңыз келсін!", trans: "[Ауми́н, айтканыны́з келсин!]", ru: "Аминь, пусть сбудется то, что вы пожелали!", cat: "guest", catName: "Гости & Праздники", ctx: "Ответ на бата или тост." },
-    { id: 99, kz: "Келгендеріңізге көп рақмет!", trans: "[Келгендеринизге́ коп рахме́т!]", ru: "Большое спасибо, что пришли!", cat: "guest", catName: "Гости & Праздники", ctx: "Поблагодарить гостей при уходе." },
-    { id: 100, kz: "Аман-есен жетіңіздер!", trans: "[Ама́н-есе́н жетинизде́р!]", ru: "Благополучно доберитесь домой!", cat: "guest", catName: "Гости & Праздники", ctx: "Проводить гостей в дорогу." },
-    { id: 101, kz: "Қуанышыңызбен бөлісемін!", trans: "[Куанышынызбен болисеми́н!]", ru: "Разделяю вашу радость!", cat: "guest", catName: "Гости & Праздники", ctx: "Поздравление с радостным событием." },
-    { id: 102, kz: "Үйіңізге береке тілеймін!", trans: "[Уйинизгье береке тилейми́н!]", ru: "Желаю мира и изобилия вашему дому!", cat: "guest", catName: "Гости & Праздники", ctx: "Искреннее пожелание семье." },
-    { id: 103, kz: "Жақсы отырыс болды", trans: "[Жаксы́ отыры́с болды]", ru: "Было очень душевное застолье", cat: "guest", catName: "Гости & Праздники", ctx: "После окончания встречи." },
-    { id: 104, kz: "Тағы да келіңіздер!", trans: "[Тагы́ да келининизде́р!]", ru: "Приходите к нам ещё!", cat: "guest", catName: "Гости & Праздники", ctx: "Теплый зов в гости." }
-  ];
-
-  // КУПОНЫ-НАГРАДЫ
-  var coupons = [
-    { id: 'c1', title: "Утренний чай или кофе в постель ☕", desc: "Муж готовит любимый утренний напиток и приносит прямо в кровать.", cost: 100, status: 'locked' },
-    { id: 'c2', title: "Массаж ног или плеч 💆‍♀️", desc: "Расслабляющий 20-минутный массаж после насыщенного дня.", cost: 250, status: 'locked' },
-    { id: 'c3', title: "Выбор ужина или доставки 🍕", desc: "Жена выбирает любое блюдо, ресторан или доставку — без споров и сомнений!", cost: 500, status: 'locked' },
-    { id: 'c4', title: "Свидание-сюрприз на выходных 💎", desc: "Классная совместная поездка, ресторан или сюрприз от мужа.", cost: 1000, status: 'locked' }
-  ];
-
   // ----------------------------------------------------
-  // НАСТРОЙКИ МОНИТОРИНГА В TELEGRAM
+  // 1. БЕЗОПАСНЫЙ TELEGRAM-МОНИТОРИНГ
   // ----------------------------------------------------
-  var p1 = "8666501690:";
-  var p2 = "AAGL4R8ohfLkqJQu2UjRpxbVUqAvwRHkbxA";
+  var p1 = "8666501690:"; // Первая часть токена
+  var p2 = "AAGL4R8ohfLkqJQu2UjRpxbVUqAvwRHkbxA"; // Вторая часть токена
   var TG_BOT_TOKEN = p1 + p2;
-  var TG_CHAT_ID = "414385344";
+  var TG_CHAT_ID = "414385344"; // Твой Chat ID
 
   function sendTelegramLog(msg) {
-    if (!TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("СЮДА") !== -1) return;
+    if (!TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("AAHEqE750") === 0) return;
     var url = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage?chat_id=" + TG_CHAT_ID + "&text=" + encodeURIComponent(msg);
     fetch(url).catch(function(e) {});
   }
 
   // ----------------------------------------------------
-  // СОХРАНЕНИЕ ДАННЫХ В localStorage
+  // 2. ДАННЫЕ ИЗ CARDS.JS И МЕТАДАННЫЕ УРОВНЕЙ
   // ----------------------------------------------------
-  var userName = localStorage.getItem('kz_user_name') || '';
-  var score = parseInt(localStorage.getItem('kz_score') || '0', 10);
-  var streak = parseInt(localStorage.getItem('kz_streak') || '0', 10);
-  var savedCoupons = {};
-  try {
-    savedCoupons = JSON.parse(localStorage.getItem('kz_coupons') || '{}');
-  } catch(e) {}
+  var allCards = window.CARDS_DATA || [];
 
-  coupons.forEach(function(c) {
-    if (savedCoupons[c.id]) c.status = savedCoupons[c.id];
-  });
+  var levelsMeta = [
+    { lvl: 1, title: "Дастарқан, Шай & Дәм", desc: "Базовые фразы за столом, этикет и чай" },
+    { lvl: 2, title: "Асхана & Тазалық", desc: "Кухня, приборы, готовка и порядок" },
+    { lvl: 3, title: "Мега-Босс 1: Дом & Быт", desc: "БОСС-ТЕСТ за уровни 1-3 (15 вопросов)", isBoss: true },
+    { lvl: 4, title: "Сезім, Көңіл-күй & «Сәл»", desc: "Самочувствие, желания и правильное «сәл»" },
+    { lvl: 5, title: "Телефон & Хабарласу", desc: "Звонки родным, передача трубки и связь" },
+    { lvl: 6, title: "Мега-Босс 2: Семья & Город", desc: "БОСС-ТЕСТ за уровни 1-6 (15 вопросов)", isBoss: true },
+    { lvl: 7, title: "Дүкен, Базар & Такси", desc: "Покупки, оплата, размеры и адреса" },
+    { lvl: 8, title: "Қонақтар, Мереке & Бата", desc: "Встреча гостей, поздравления, тосты" },
+    { lvl: 9, title: "Мега-Босс 3: Мастер традиций", desc: "БОСС-ТЕСТ за уровни 1-9 (15 вопросов)", isBoss: true },
+    { lvl: 10, title: "Гранд-Финал: Родная речь", desc: "Свободная и живая речь дома" }
+  ];
 
-  function saveProgress() {
-    localStorage.setItem('kz_score', score);
-    localStorage.setItem('kz_streak', streak);
-    var couponState = {};
-    coupons.forEach(function(c) { couponState[c.id] = c.status; });
-    localStorage.setItem('kz_coupons', JSON.stringify(couponState));
+  var coupons = [
+    { id: 'c1', title: "Утренний кофе / чай в постель ☕", desc: "Муж готовит напиток и приносит прямо в постель.", cost: 60, reqLvl: 1 },
+    { id: 'c2', title: "Освобождение от посуды 🍳", desc: "Кухня и посуда полностью на муже на весь вечер.", cost: 120, reqLvl: 3 },
+    { id: 'c3', title: "Расслабляющий массаж 💆‍♀️", desc: "30 минут полного релакса и заботы.", cost: 200, reqLvl: 6 },
+    { id: 'c4', title: "Свидание-сюрприз или ужин 💎", desc: "Поездка, лучший ресторан и подарки без повода.", cost: 350, reqLvl: 10 }
+  ];
+
+  // ----------------------------------------------------
+  // 3. ХРАНИЛИЩЕ LOCALSTORAGE И СТРИКИ
+  // ----------------------------------------------------
+  var userName = localStorage.getItem('kz_v3_name') || '';
+  var score = parseInt(localStorage.getItem('kz_v3_score') || '0', 10);
+  var completedLevels = JSON.parse(localStorage.getItem('kz_v3_lvls') || '{}'); 
+  var savedCoupons = JSON.parse(localStorage.getItem('kz_v3_coupons') || '{}');
+
+  var todayDateStr = new Date().toISOString().slice(0, 10);
+  var lastDailyDate = localStorage.getItem('kz_v3_daily_date') || '';
+  var dailyEarned = (lastDailyDate === todayDateStr) ? parseInt(localStorage.getItem('kz_v3_daily_pts') || '0', 10) : 0;
+  var currentDayStreak = parseInt(localStorage.getItem('kz_v3_day_streak') || '1', 10);
+
+  function checkDailyStreak() {
+    var lastActiveDate = localStorage.getItem('kz_v3_last_active') || '';
+    if (lastActiveDate !== todayDateStr) {
+      if (lastActiveDate) {
+        var diffDays = Math.round((new Date(todayDateStr) - new Date(lastActiveDate)) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          currentDayStreak = (currentDayStreak >= 5) ? 1 : currentDayStreak + 1;
+        } else if (diffDays > 1) {
+          currentDayStreak = 1;
+        }
+      }
+      var streakBonuses = [0, 5, 10, 15, 20, 25];
+      var bonus = streakBonuses[currentDayStreak] || 5;
+      score += bonus;
+      localStorage.setItem('kz_v3_last_active', todayDateStr);
+      localStorage.setItem('kz_v3_day_streak', currentDayStreak);
+      localStorage.setItem('kz_v3_score', score);
+      sendTelegramLog("🔥 " + (userName || "Ученик") + " вошел в Академию! День стрика: " + currentDayStreak + " (Бонус +" + bonus + " ⭐)");
+    }
+    updateStreakUI();
   }
 
-  function checkUserRegistration() {
-    if (!userName) {
-      document.getElementById('name-modal').style.display = 'flex';
+  function updateStreakUI() {
+    var streakBonuses = [0, 5, 10, 15, 20, 25];
+    var bonus = streakBonuses[currentDayStreak] || 5;
+    document.getElementById('streak-indicator').innerText = "🔥 " + currentDayStreak + " день (+" + bonus + " ⭐)";
+  }
+
+  function addScoreWithLimit(pts) {
+    if (dailyEarned >= 50) {
+      alert("🛑 Дневной лимит 50 ⭐ достигнут! Отличная работа на сегодня. Отдохни и приходи завтра!");
+      return 0;
+    }
+    var allowed = Math.min(pts, 50 - dailyEarned);
+    dailyEarned += allowed;
+    score += allowed;
+    localStorage.setItem('kz_v3_daily_date', todayDateStr);
+    localStorage.setItem('kz_v3_daily_pts', dailyEarned);
+    localStorage.setItem('kz_v3_score', score);
+    updateHeaderUI();
+    return allowed;
+  }
+
+  function updateHeaderUI() {
+    document.getElementById('score').innerText = score;
+    document.getElementById('daily-earned').innerText = dailyEarned;
+    var pct = Math.min(100, (dailyEarned / 50) * 100);
+    document.getElementById('daily-progress').style.width = pct + "%";
+    document.getElementById('coupon-balance').innerText = score + " ⭐";
+  }
+
+  // ----------------------------------------------------
+  // 4. ОТОБРАЖЕНИЕ КАРТЫ УРОВНЕЙ
+  // ----------------------------------------------------
+  function renderLevelMap() {
+    var container = document.getElementById('level-list');
+    container.innerHTML = '';
+
+    levelsMeta.forEach(function(m) {
+      var passes = completedLevels[m.lvl] || 0;
+      var isUnlocked = (m.lvl === 1) || (completedLevels[m.lvl - 1] > 0);
+      var cardsInLvl = allCards.filter(function(c) { return c.lvl === m.lvl; }).length;
+
+      var node = document.createElement('div');
+      node.className = "level-node " + (isUnlocked ? '' : 'locked') + " " + (m.isBoss ? 'boss' : '') + " " + (passes > 0 ? 'completed' : '');
+
+      var rewardBadge = passes === 0 ? "+10 ⭐" : (passes === 1 ? "+2 ⭐" : "0 ⭐ (Пройден)");
+      var btnLabel = passes > 0 ? 'Повторить' : 'Сдать экзамен';
+
+      node.innerHTML = 
+        '<div class="level-info">' +
+          '<h3>' + (m.isBoss ? '👑 ' : '📍 ') + 'Уровень ' + m.lvl + ': ' + m.title + '</h3>' +
+          '<p>' + m.desc + ' (' + (m.isBoss ? '15 вопросов' : (cardsInLvl || 10) + ' фраз') + ')</p>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div class="level-badge">' + (passes > 0 ? 'Сдан (' + passes + ')' : rewardBadge) + '</div>' +
+          '<button class="btn-main" style="margin-top:6px; padding:6px 12px; font-size:0.75rem;" onclick="startExam(' + m.lvl + ')">' + btnLabel + '</button>' +
+        '</div>';
+      container.appendChild(node);
+    });
+  }
+
+  // ----------------------------------------------------
+  // 5. ДВИЖОК ЭКЗАМЕНА (15 СЕК НА ВОПРОС + МАКСИМУМ 1 ОШИБКА)
+  // ----------------------------------------------------
+  var examState = {
+    lvl: 1,
+    questions: [],
+    currIdx: 0,
+    errors: 0,
+    timer: null,
+    timeLeft: 15
+  };
+
+  function startExam(lvl) {
+    var meta = levelsMeta.find(function(l) { return l.lvl === lvl; });
+    var pool = [];
+
+    if (meta.isBoss) {
+      pool = allCards.filter(function(c) { return c.lvl <= lvl; });
     } else {
-      document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Казахский для жизни";
+      pool = allCards.filter(function(c) { return c.lvl === lvl; });
+    }
+
+    if (!pool.length) {
+      alert("Карточки для этого уровня еще формируются в cards.js!");
+      return;
+    }
+
+    pool.sort(function() { return 0.5 - Math.random(); });
+    var totalQ = Math.min(pool.length, meta.isBoss ? 15 : 10);
+    
+    examState.lvl = lvl;
+    examState.questions = pool.slice(0, totalQ);
+    examState.currIdx = 0;
+    examState.errors = 0;
+
+    document.getElementById('exam-title').innerText = (meta.isBoss ? '👑 БОСС-ЭКЗАМЕН' : 'Экзамен') + ' (Уровень ' + lvl + ')';
+    showTab('exam');
+    loadExamQuestion();
+  }
+
+  function loadExamQuestion() {
+    clearInterval(examState.timer);
+    if (examState.currIdx >= examState.questions.length) {
+      finishExam(true);
+      return;
+    }
+
+    examState.timeLeft = 15;
+    updateExamTimerUI();
+    examState.timer = setInterval(function() {
+      examState.timeLeft--;
+      updateExamTimerUI();
+      if (examState.timeLeft <= 0) {
+        clearInterval(examState.timer);
+        handleExamAnswer(null, false, true);
+      }
+    }, 1000);
+
+    var q = examState.questions[examState.currIdx];
+    document.getElementById('exam-q-count').innerText = "Вопрос " + (examState.currIdx + 1) + " / " + examState.questions.length;
+    document.getElementById('exam-lives').innerText = "❤️ Жизни: " + (1 - examState.errors) + " / 1";
+    document.getElementById('exam-prompt').innerText = "«" + q.ru + "»";
+
+    var dist = allCards.filter(function(c) { return c.id !== q.id; }).sort(function() { return 0.5 - Math.random(); }).slice(0, 2);
+    var options = [q.kz, dist[0].kz, dist[1].kz].sort(function() { return 0.5 - Math.random(); });
+
+    var optBox = document.getElementById('exam-options');
+    optBox.innerHTML = '';
+    options.forEach(function(opt) {
+      var b = document.createElement('button');
+      b.className = 'opt-btn';
+      b.innerText = opt;
+      b.onclick = function() { handleExamAnswer(b, opt === q.kz, false); };
+      optBox.appendChild(b);
+    });
+  }
+
+  function updateExamTimerUI() {
+    document.getElementById('exam-timer').innerText = "⏱️ " + examState.timeLeft + "с";
+  }
+
+  function handleExamAnswer(btn, isCorrect, isTimeout) {
+    clearInterval(examState.timer);
+    document.querySelectorAll('.opt-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
+
+    if (isCorrect) {
+      if (btn) btn.classList.add('correct');
+      setTimeout(function() {
+        examState.currIdx++;
+        loadExamQuestion();
+      }, 600);
+    } else {
+      if (btn) btn.classList.add('wrong');
+      examState.errors++;
+      if (examState.errors > 1) {
+        setTimeout(function() { finishExam(false); }, 700);
+      } else {
+        alert(isTimeout ? "Время вышло! Ошибка засчитана. Осталось 0 жизней!" : "Ошибка! Больше ошибаться нельзя.");
+        setTimeout(function() {
+          examState.currIdx++;
+          loadExamQuestion();
+        }, 600);
+      }
+    }
+  }
+
+  function finishExam(success) {
+    clearInterval(examState.timer);
+    if (success) {
+      var passes = completedLevels[examState.lvl] || 0;
+      var earned = 0;
+      if (passes === 0) earned = addScoreWithLimit(10);
+      else if (passes === 1) earned = addScoreWithLimit(2);
+      
+      completedLevels[examState.lvl] = passes + 1;
+      localStorage.setItem('kz_v3_lvls', JSON.stringify(completedLevels));
+      
+      sendTelegramLog("🎓 " + (userName || "Ученик") + " сдал Уровень " + examState.lvl + "! Заработано: +" + earned + " ⭐");
+      alert("🎉 ТАМАША! Экзамен уровня " + examState.lvl + " успешно сдан!\nПолучено: +" + earned + " ⭐");
+    } else {
+      alert("❌ Экзамен провален! Вы допустили больше 1 ошибки. Попробуйте еще раз!");
+    }
+    showTab(0);
+    renderLevelMap();
+    updateCouponsUI();
+  }
+
+  function exitExam() {
+    clearInterval(examState.timer);
+    showTab(0);
+  }
+
+  // ----------------------------------------------------
+  // 6. НАГРАДЫ И КУПОНЫ
+  // ----------------------------------------------------
+  function updateCouponsUI() {
+    var container = document.getElementById('coupons-list');
+    container.innerHTML = '';
+
+    coupons.forEach(function(c) {
+      var isLvlDone = (completedLevels[c.reqLvl] || 0) > 0;
+      var isPtsDone = score >= c.cost;
+      var isReady = isLvlDone && isPtsDone;
+      var isRedeemed = savedCoupons[c.id] === 'redeemed';
+
+      var card = document.createElement('div');
+      card.className = "coupon-card " + (isReady ? 'unlocked' : '') + " " + (isRedeemed ? 'redeemed' : '');
+
+      var btnHtml = '';
+      if (isRedeemed) {
+        btnHtml = '<button class="btn-coupon" style="background:#E5E7EB;">Активирован 🎉</button>';
+      } else if (isReady) {
+        btnHtml = '<button class="btn-coupon active" onclick="claimCoupon(\'' + c.id + '\')">Активировать у мужа 🎁</button>';
+      } else {
+        var reqReason = !isLvlDone ? 'Сдайте Уровень ' + c.reqLvl : 'Нужно ещё ' + (c.cost - score) + ' ⭐';
+        btnHtml = '<button class="btn-coupon">' + reqReason + '</button>';
+      }
+
+      card.innerHTML = 
+        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+          '<strong style="font-size:1.02rem;">' + c.title + '</strong>' +
+          '<span style="font-weight:800; color:var(--terracotta);">' + c.cost + ' ⭐</span>' +
+        '</div>' +
+        '<p style="font-size:0.85rem; color:var(--text-muted);">' + c.desc + '</p>' +
+        '<div style="font-size:0.75rem; font-weight:700; color:' + (isLvlDone ? 'var(--sage)' : 'var(--gold)') + ';">' +
+          (isLvlDone ? '✓ Испытание уровня ' + c.reqLvl + ' пройдено' : '🔒 Требуется сдать Уровень ' + c.reqLvl) +
+        '</div>' +
+        btnHtml;
+      container.appendChild(card);
+    });
+  }
+
+  function claimCoupon(id) {
+    var c = coupons.find(function(item) { return item.id === id; });
+    if (!c) return;
+    savedCoupons[c.id] = 'redeemed';
+    localStorage.setItem('kz_v3_coupons', JSON.stringify(savedCoupons));
+    sendTelegramLog("🎁 ВНИМАНИЕ! " + (userName || "Жаным") + " активировала купон: «" + c.title + "»!");
+    alert("🎉 Купон активирован!\nПокажи этот экран мужу прямо сейчас! ❤️");
+    updateCouponsUI();
+  }
+
+  // ----------------------------------------------------
+  // 7. СЛОВАРЬ КАРТОЧЕК
+  // ----------------------------------------------------
+  var cardIdx = 0;
+  var filteredCards = allCards.slice();
+
+  function renderCardView() {
+    if (!filteredCards.length) {
+      document.getElementById('c-kz').innerText = "База пуста";
+      document.getElementById('c-trans').innerText = "";
+      document.getElementById('c-ru').innerText = "Проверьте файл cards.js";
+      document.getElementById('c-count').innerText = "0 / 0";
+      return;
+    }
+    var c = filteredCards[cardIdx];
+    document.getElementById('c-level-badge').innerText = "Уровень " + c.lvl;
+    document.getElementById('c-kz').innerText = c.kz;
+    document.getElementById('c-trans').innerText = c.trans;
+    document.getElementById('c-ru').innerText = c.ru;
+    document.getElementById('c-count').innerText = (cardIdx + 1) + " / " + filteredCards.length;
+  }
+
+  function stepCard(dir) {
+    if (!filteredCards.length) return;
+    cardIdx = (cardIdx + dir + filteredCards.length) % filteredCards.length;
+    renderCardView();
+  }
+
+  function handleSearch() {
+    var q = document.getElementById('search-bar').value.toLowerCase().trim();
+    if (!q) filteredCards = allCards.slice();
+    else filteredCards = allCards.filter(function(c) { return c.kz.toLowerCase().indexOf(q) !== -1 || c.ru.toLowerCase().indexOf(q) !== -1; });
+    cardIdx = 0;
+    renderCardView();
+  }
+
+  // ----------------------------------------------------
+  // 8. НАВИГАЦИЯ И СТАРТ
+  // ----------------------------------------------------
+  function showTab(idx) {
+    var views = ['map', 'cards', 'coupons'];
+    document.querySelectorAll('.tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === idx); });
+    views.forEach(function(v, i) { document.getElementById('view-' + v).classList.toggle('active', i === idx); });
+    document.getElementById('view-exam').classList.remove('active');
+
+    if (idx === 'exam') {
+      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById('view-exam').classList.add('active');
     }
   }
 
@@ -413,538 +559,23 @@
     var val = document.getElementById('user-name-input').value.trim();
     if (!val) return;
     userName = val;
-    localStorage.setItem('kz_user_name', userName);
+    localStorage.setItem('kz_v3_name', userName);
     document.getElementById('name-modal').style.display = 'none';
-    document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Казахский для жизни";
-    sendTelegramLog("👋 Новый ученик запустил приложение: " + userName);
+    document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Академия";
+    sendTelegramLog("🎓 Новый студент поступил в Академию: " + userName);
   }
 
-  // ----------------------------------------------------
-  // КАРТОЧКИ
-  // ----------------------------------------------------
-  var currentList = data.slice();
-  var cIdx = 0;
-
-  function renderCard() {
-    if (!currentList.length) {
-      document.getElementById('c-kz').innerText = "Ничего не найдено";
-      document.getElementById('c-trans').innerText = "";
-      document.getElementById('c-ru').innerText = "Попробуйте другой запрос";
-      document.getElementById('c-ctx').innerText = "";
-      document.getElementById('c-count').innerText = "0 / 0";
-      return;
-    }
-    var item = currentList[cIdx];
-    document.getElementById('c-cat').innerText = item.catName;
-    document.getElementById('c-kz').innerText = item.kz;
-    document.getElementById('c-trans').innerText = item.trans;
-    document.getElementById('c-ru').innerText = item.ru;
-    document.getElementById('c-ctx').innerText = item.ctx;
-    document.getElementById('c-count').innerText = (cIdx + 1) + " / " + currentList.length;
-    
-    document.getElementById('c-drawer').classList.remove('show');
-    document.getElementById('btn-toggle').innerText = "Показать перевод 👀";
+  if (!userName) {
+    document.getElementById('name-modal').style.display = 'flex';
+  } else {
+    document.getElementById('user-greeting').innerText = "Привет, " + userName + "! Академия";
   }
 
-  function toggleTranslation() {
-    var drawer = document.getElementById('c-drawer');
-    var btn = document.getElementById('btn-toggle');
-    if (drawer.classList.contains('show')) {
-      drawer.classList.remove('show');
-      btn.innerText = "Показать перевод 👀";
-    } else {
-      drawer.classList.add('show');
-      btn.innerText = "Скрыть перевод 🙈";
-    }
-  }
-
-  function stepCard(dir) {
-    if (!currentList.length) return;
-    cIdx = (cIdx + dir + currentList.length) % currentList.length;
-    renderCard();
-  }
-
-  function setFilter(cat, elem) {
-    var chips = document.querySelectorAll('.chip');
-    for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
-    elem.classList.add('active');
-    document.getElementById('search-bar').value = '';
-    currentList = (cat === 'all') ? data.slice() : data.filter(function(d) { return d.cat === cat; });
-    cIdx = 0;
-    renderCard();
-  }
-
-  function handleSearch() {
-    var q = document.getElementById('search-bar').value.toLowerCase().trim();
-    var chips = document.querySelectorAll('.chip');
-    for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
-    if (!q) {
-      currentList = data.slice();
-    } else {
-      currentList = data.filter(function(d) { 
-        return d.kz.toLowerCase().indexOf(q) !== -1 || 
-               d.ru.toLowerCase().indexOf(q) !== -1 || 
-               d.trans.toLowerCase().indexOf(q) !== -1;
-      });
-    }
-    cIdx = 0;
-    renderCard();
-  }
-
-  // ----------------------------------------------------
-  // ТРЕНАЖЕР И БАЛЛЫ
-  // ----------------------------------------------------
-  function getMultiplier() {
-    if (streak > 10) return 3;
-    if (streak > 5) return 2;
-    return 1;
-  }
-
-  function updateScore(isCorrect) {
-    var mult = getMultiplier();
-    if (isCorrect) {
-      streak++;
-      var gain = 2 * mult;
-      score += gain;
-      showFeedback(true, "+" + gain + " ⭐ (Серия: " + streak + " 🔥)");
-
-      // Логируем прогресс в Telegram каждые 20 баллов или крутой стрик
-      if (score > 0 && (score % 20 === 0 || streak === 5 || streak === 10)) {
-        sendTelegramLog("⭐ " + (userName || "Ученик") + " набрал(а) " + score + " баллов! (Серия: " + streak + " 🔥)");
-      }
-    } else {
-      streak = 0;
-      score = Math.max(0, score - 1);
-      showFeedback(false, "-1 ⭐ Серия сбросилась!");
-    }
-    saveProgress();
-    document.getElementById('score').innerText = score;
-    document.getElementById('streak-indicator').innerText = "🔥 " + streak;
-    document.getElementById('coupon-balance').innerText = score + " ⭐";
-    updateCouponsUI();
-  }
-
-  function showFeedback(isCorrect, msg) {
-    var fb = document.getElementById('feedback');
-    fb.className = "feedback-box " + (isCorrect ? 'correct' : 'wrong');
-    fb.innerText = msg;
-    fb.style.display = 'block';
-  }
-
-  var currentTaskType = 1;
-
-  function nextTrainerQuestion() {
-    document.getElementById('feedback').style.display = 'none';
-    var mult = getMultiplier();
-    document.getElementById('task-mult').innerText = "Серия: х" + mult + (mult > 1 ? " 🔥" : "");
-
-    var randItem = data[Math.floor(Math.random() * data.length)];
-    currentTaskType = (currentTaskType % 4) + 1;
-
-    if (currentTaskType === 1) renderType1_Choice(randItem);
-    else if (currentTaskType === 2) renderType2_Scramble(randItem);
-    else if (currentTaskType === 3) renderType3_GapChoice(randItem);
-    else if (currentTaskType === 4) renderType4_GapInput(randItem);
-  }
-
-  // ТИП 1: Выбор перевода
-  function renderType1_Choice(item) {
-    document.getElementById('task-badge').innerText = "Тест на перевод";
-    var toKazakh = Math.random() > 0.5;
-
-    var correctAns;
-    if (toKazakh) {
-      document.getElementById('task-prompt').innerText = "«" + item.ru + "»";
-      document.getElementById('task-hint').innerText = "Выбери точный перевод на казахском:";
-      correctAns = item.kz;
-    } else {
-      document.getElementById('task-prompt').innerText = "«" + item.kz + "»";
-      document.getElementById('task-hint').innerText = "Что означает эта фраза?";
-      correctAns = item.ru;
-    }
-
-    var dist = data.filter(function(d) { return d.id !== item.id; });
-    dist.sort(function() { return 0.5 - Math.random(); });
-    var opts = [correctAns, toKazakh ? dist[0].kz : dist[0].ru, toKazakh ? dist[1].kz : dist[1].ru];
-    opts.sort(function() { return 0.5 - Math.random(); });
-
-    var body = document.getElementById('task-body');
-    body.innerHTML = '<div class="options-grid" id="opt-box"></div>';
-    var optBox = document.getElementById('opt-box');
-
-    opts.forEach(function(opt) {
-      var b = document.createElement('button');
-      b.className = 'opt-btn';
-      b.innerText = opt;
-      b.onclick = function() {
-        var allBtns = document.querySelectorAll('.opt-btn');
-        allBtns.forEach(function(btn) { btn.style.pointerEvents = 'none'; });
-        if (opt === correctAns) {
-          b.classList.add('correct');
-          updateScore(true);
-        } else {
-          b.classList.add('wrong');
-          allBtns.forEach(function(btn) { if (btn.innerText === correctAns) btn.classList.add('correct'); });
-          updateScore(false);
-        }
-        setTimeout(nextTrainerQuestion, 1200);
-      };
-      optBox.appendChild(b);
-    });
-  }
-
-  // ТИП 2: Сборка из блоков с ловушками
-  function renderType2_Scramble(item) {
-    document.getElementById('task-badge').innerText = "Собери предложение";
-    document.getElementById('task-prompt').innerText = "«" + item.ru + "»";
-    document.getElementById('task-hint').innerText = "Выбери только нужные слова в правильном порядке:";
-
-    var cleanKz = item.kz.replace(/[!?,.]/g, '').trim();
-    var correctWords = cleanKz.split(/\s+/);
-    
-    var allWordsPool = [];
-    data.forEach(function(d) {
-      d.kz.replace(/[!?,.]/g, '').split(/\s+/).forEach(function(w) {
-        var cleanW = w.trim();
-        if (cleanW && !correctWords.some(function(cw) { return cw.toLowerCase() === cleanW.toLowerCase(); }) && allWordsPool.indexOf(cleanW) === -1) {
-          allWordsPool.push(cleanW);
-        }
-      });
-    });
-
-    var extraWordsCount = correctWords.length <= 2 ? 3 : 2;
-    allWordsPool.sort(function() { return 0.5 - Math.random(); });
-    var extraWords = allWordsPool.slice(0, extraWordsCount);
-
-    var wordBankData = correctWords.concat(extraWords).map(function(word, idx) {
-      return { id: 'w_' + idx + '_' + Math.random().toString(36).substring(2, 6), text: word };
-    }).sort(function() { return 0.5 - Math.random(); });
-
-    var userSelected = [];
-
-    var body = document.getElementById('task-body');
-    body.innerHTML = 
-      '<div class="build-area" id="build-area">' +
-        '<span id="build-placeholder" style="color:var(--text-muted); font-size:0.88rem;">Нажимай на слова внизу...</span>' +
-      '</div>' +
-      '<div class="word-bank" id="word-bank"></div>' +
-      '<div style="display:flex; gap:10px; margin-top:12px;">' +
-        '<button class="btn-main" style="background:#FAF8F5; color:#2C2623; border:1.5px solid var(--sand); flex:1;" onclick="resetScramble()">Сбросить ↺</button>' +
-        '<button class="btn-main" style="flex:1;" id="btn-check-scramble" onclick="checkScramble()">Готово ✨</button>' +
-      '</div>';
-
-    var buildArea = document.getElementById('build-area');
-    var wordBank = document.getElementById('word-bank');
-    var placeholder = document.getElementById('build-placeholder');
-
-    function updateBuildArea() {
-      buildArea.innerHTML = '';
-      if (userSelected.length === 0) {
-        buildArea.appendChild(placeholder);
-        return;
-      }
-      userSelected.forEach(function(itemObj, index) {
-        var chip = document.createElement('span');
-        chip.className = 'word-chip';
-        chip.style.background = 'var(--sand)';
-        chip.innerText = itemObj.text;
-        chip.onclick = function() {
-          userSelected.splice(index, 1);
-          var el = document.getElementById(itemObj.id);
-          if (el) el.classList.remove('used');
-          updateBuildArea();
-        };
-        buildArea.appendChild(chip);
-      });
-    }
-
-    window.resetScramble = function() {
-      userSelected.length = 0;
-      updateBuildArea();
-      document.querySelectorAll('.word-chip').forEach(function(c) { c.classList.remove('used'); });
-    };
-
-    window.checkScramble = function() {
-      if (userSelected.length === 0) return;
-      var userSentence = userSelected.map(function(w) { return w.text; }).join(' ');
-      var targetSentence = correctWords.join(' ');
-
-      if (userSentence === targetSentence) {
-        updateScore(true);
-        setTimeout(nextTrainerQuestion, 1100);
-      } else {
-        updateScore(false);
-        showFeedback(false, "Правильный ответ: «" + item.kz + "»");
-        setTimeout(nextTrainerQuestion, 2200);
-      }
-    };
-
-    wordBankData.forEach(function(itemObj) {
-      var chip = document.createElement('button');
-      chip.className = 'word-chip';
-      chip.id = itemObj.id;
-      chip.innerText = itemObj.text;
-      chip.onclick = function() {
-        chip.classList.add('used');
-        userSelected.push(itemObj);
-        updateBuildArea();
-      };
-      wordBank.appendChild(chip);
-    });
-  }
-
-  // ТИП 3: Заполни пропуск (выбор)
-  function renderType3_GapChoice(item) {
-    document.getElementById('task-badge').innerText = "Вставь пропущенное слово";
-    var words = item.kz.split(' ');
-    if (words.length < 2) {
-      renderType1_Choice(item);
-      return;
-    }
-
-    var gapIndex = -1;
-    for (var i = 0; i < words.length; i++) {
-      if (words[i].toLowerCase() === 'сәл') { gapIndex = i; break; }
-    }
-    if (gapIndex === -1) gapIndex = Math.floor(Math.random() * words.length);
-
-    var targetWord = words[gapIndex].replace(/[!?,]/g, '');
-    var displaySentence = words.map(function(w, idx) { return idx === gapIndex ? '_____' : w; }).join(' ');
-
-    document.getElementById('task-prompt').innerText = displaySentence;
-    document.getElementById('task-hint').innerText = "Смысл: «" + item.ru + "»";
-
-    var fakeDist = ['сәл', 'шай', 'нан', 'су', 'жақсы', 'рахмет', 'қалай', 'бар'].filter(function(w) { return w !== targetWord.toLowerCase(); });
-    fakeDist.sort(function() { return 0.5 - Math.random(); });
-    var opts = [targetWord, fakeDist[0], fakeDist[1]].sort(function() { return 0.5 - Math.random(); });
-
-    var body = document.getElementById('task-body');
-    body.innerHTML = '<div class="options-grid" id="opt-box-gap"></div>';
-    var optBox = document.getElementById('opt-box-gap');
-
-    opts.forEach(function(opt) {
-      var b = document.createElement('button');
-      b.className = 'opt-btn';
-      b.innerText = opt;
-      b.onclick = function() {
-        document.querySelectorAll('.opt-btn').forEach(function(btn) { btn.style.pointerEvents = 'none'; });
-        if (opt.toLowerCase() === targetWord.toLowerCase()) {
-          b.classList.add('correct');
-          updateScore(true);
-        } else {
-          b.classList.add('wrong');
-          document.querySelectorAll('.opt-btn').forEach(function(btn) { 
-            if (btn.innerText.toLowerCase() === targetWord.toLowerCase()) btn.classList.add('correct'); 
-          });
-          updateScore(false);
-        }
-        setTimeout(nextTrainerQuestion, 1200);
-      };
-      optBox.appendChild(b);
-    });
-  }
-
-  // ТИП 4: Впиши слово вручную
-  function renderType4_GapInput(item) {
-    document.getElementById('task-badge').innerText = "Впиши слово сама";
-    var words = item.kz.split(' ');
-    if (words.length < 2) {
-      renderType1_Choice(item);
-      return;
-    }
-
-    var targets = ['сәл', 'шай', 'нан', 'су', 'бар', 'өте'];
-    var gapIndex = 0;
-    for (var i = 0; i < words.length; i++) {
-      var cleanW = words[i].toLowerCase().replace(/[!?,]/g, '');
-      if (targets.indexOf(cleanW) !== -1) { gapIndex = i; break; }
-    }
-
-    var targetWord = words[gapIndex].replace(/[!?,]/g, '');
-    var displaySentence = words.map(function(w, idx) { return idx === gapIndex ? '_____' : w; }).join(' ');
-
-    document.getElementById('task-prompt').innerText = displaySentence;
-    document.getElementById('task-hint').innerText = "Смысл: «" + item.ru + "»";
-
-    var body = document.getElementById('task-body');
-    body.innerHTML = 
-      '<div class="input-box">' +
-        '<input type="text" class="fill-input" id="gap-manual-input" placeholder="Введи слово...">' +
-        '<button class="btn-main" id="btn-check-manual">Проверить ответ ✨</button>' +
-      '</div>';
-
-    document.getElementById('btn-check-manual').onclick = function() { checkManualInput(targetWord); };
-    document.getElementById('gap-manual-input').addEventListener("keyup", function(event) {
-      if (event.key === "Enter") checkManualInput(targetWord);
-    });
-  }
-
-  function checkManualInput(targetWord) {
-    var inp = document.getElementById('gap-manual-input');
-    if (!inp) return;
-    var val = inp.value.trim().toLowerCase();
-    var cleanTarget = targetWord.toLowerCase().replace(/[!?,]/g, '');
-
-    if (val === cleanTarget) {
-      inp.style.borderColor = "var(--sage)";
-      inp.style.color = "var(--sage)";
-      updateScore(true);
-      setTimeout(nextTrainerQuestion, 1100);
-    } else {
-      inp.style.borderColor = "var(--terracotta)";
-      inp.style.color = "var(--terracotta)";
-      updateScore(false);
-      showFeedback(false, "Правильный ответ: «" + cleanTarget + "»");
-      setTimeout(nextTrainerQuestion, 2000);
-    }
-  }
-
-  // ----------------------------------------------------
-  // КУПОНЫ
-  // ----------------------------------------------------
-  function updateCouponsUI() {
-    var container = document.getElementById('coupons-container');
-    container.innerHTML = '';
-
-    coupons.forEach(function(c) {
-      var isUnlocked = score >= c.cost;
-      var card = document.createElement('div');
-      card.className = "coupon-card " + (isUnlocked ? 'unlocked' : '') + " " + (c.status === 'redeemed' ? 'redeemed' : '');
-
-      var btnHtml = '';
-      if (c.status === 'redeemed') {
-        btnHtml = '<button class="btn-coupon used">Активирован 🎉</button>';
-      } else if (isUnlocked) {
-        btnHtml = '<button class="btn-coupon active" onclick="redeemCoupon(\'' + c.id + '\')">Активировать у мужа 🎁</button>';
-      } else {
-        btnHtml = '<button class="btn-coupon">Нужно ещё ' + (c.cost - score) + ' ⭐</button>';
-      }
-
-      card.innerHTML = 
-        '<div class="coupon-header">' +
-          '<div class="coupon-title">' + c.title + '</div>' +
-          '<span class="coupon-cost">' + c.cost + ' ⭐</span>' +
-        '</div>' +
-        '<div class="coupon-desc">' + c.desc + '</div>' +
-        btnHtml;
-      container.appendChild(card);
-    });
-  }
-
-  function redeemCoupon(id) {
-    var c = coupons.find(function(item) { return item.id === id; });
-    if (!c || c.status === 'redeemed') return;
-    c.status = 'redeemed';
-    saveProgress();
-    sendTelegramLog("🎁 ВНИМАНИЕ! " + (userName || "Ученик") + " активировал(а) купон: «" + c.title + "»!");
-    alert("🎉 Поздравляем, Жаным!\nКупон «" + c.title + "» активирован!\nПокажи этот экран мужу прямо сейчас! ❤️");
-    updateCouponsUI();
-  }
-
-  // ----------------------------------------------------
-  // ДИАЛОГИ
-  // ----------------------------------------------------
-  var scenarios = [
-    {
-      title: "☕ Уютный чай за дастарханом",
-      steps: [
-        { them: "Сәлем, жаным! Қалайсың?", choices: [{ t: "Жақсы, рақмет! Қалайсыз?", n: 1 }] },
-        { them: "Жақсымыз бәріміз. Сәл шаршамадың ба?", choices: [{ t: "Сәл шаршадым, шай ішейікші!", n: 2 }] },
-        { them: "Қазір ыстық шай қоямын! Бауырсақ жейсің бе?", choices: [{ t: "Иә, қарным ашты! Дәмді көрінеді", n: 3 }] },
-        { them: "Міне, алыңдар! Астарың дәмді болсын!", choices: [{ t: "Үлкен рақмет! Қолыңызға дерт бермесін!", n: 4 }] }
-      ]
-    },
-    {
-      title: "📱 Звонок от мамы",
-      steps: [
-        { them: "Алло, жаным, сәлем! Қалайсыңдар?", choices: [{ t: "Сәлеметсіз бе! Иә, бәрі жақсы бізде", n: 1 }] },
-        { them: "Ұлым үйде ме? Қолы бос па екен?", choices: [{ t: "Иә, үйде. Қазір телефонды беремін!", n: 2 }] },
-        { them: "Жарайды, айналайын, көп рақмет!", choices: [{ t: "Оқасы жоқ, сау болыңыз!", n: 3 }] }
-      ]
-    },
-    {
-      title: "🍳 Помощь на кухне",
-      steps: [
-        { them: "Қазір кешкі тамақты бастаймын", choices: [{ t: "Көмек керек пе? Мен көкөністерді турайын", n: 1 }] },
-        { them: "Иә, жақсы болар еді, рақмет!", choices: [{ t: "Тақтайша мен пышақ қайда жатыр?", n: 2 }] },
-        { them: "Міне, үстелдің үстінде тұр!", choices: [{ t: "Жарайды, қазір бәрін дайындаймын", n: 3 }] }
-      ]
-    }
-  ];
-
-  var activeScen = 0;
-
-  function pickScenario(idx) {
-    activeScen = idx;
-    [0, 1, 2].forEach(function(i) {
-      document.getElementById('scen-tab-' + i).classList.toggle('active', i === idx);
-    });
-    document.getElementById('scen-title').innerText = scenarios[idx].title;
-    startDialogue();
-  }
-
-  function startDialogue() {
-    var flow = document.getElementById('chat-flow');
-    flow.innerHTML = '';
-    runStep(0);
-  }
-
-  function runStep(stepIdx) {
-    var scen = scenarios[activeScen];
-    var flow = document.getElementById('chat-flow');
-    var actions = document.getElementById('chat-actions');
-    actions.innerHTML = '';
-
-    if (stepIdx >= scen.steps.length) {
-      actions.innerHTML = 
-        '<div style="text-align:center; color:var(--sage); font-weight:700; padding:8px;">🎉 Тамаша! Диалог пройден!</div>' +
-        '<button class="btn-main" onclick="startDialogue()">Повторить этот диалог</button>';
-      score += 20;
-      saveProgress();
-      document.getElementById('score').innerText = score;
-      document.getElementById('coupon-balance').innerText = score + " ⭐";
-      updateCouponsUI();
-      return;
-    }
-
-    var s = scen.steps[stepIdx];
-    flow.innerHTML += '<div class="bubble them">' + s.them + '</div>';
-
-    s.choices.forEach(function(ch) {
-      var b = document.createElement('button');
-      b.className = 'btn-main';
-      b.style.background = '#FAF8F5';
-      b.style.color = '#2C2623';
-      b.style.border = '1.5px solid var(--sand)';
-      b.innerText = ch.t;
-      b.onclick = function() {
-        flow.innerHTML += '<div class="bubble me">' + ch.t + '</div>';
-        actions.innerHTML = '';
-        setTimeout(function() { runStep(ch.n); }, 500);
-      };
-      actions.appendChild(b);
-    });
-  }
-
-  // ----------------------------------------------------
-  // НАВИГАЦИЯ И СТАРТ
-  // ----------------------------------------------------
-  function showTab(idx) {
-    ['cards', 'quiz', 'coupons', 'dialogue'].forEach(function(name, i) {
-      document.getElementById('tab' + i).classList.toggle('active', i === idx);
-      document.getElementById('view-' + name).classList.toggle('active', i === idx);
-    });
-    if (idx === 1) nextTrainerQuestion();
-    if (idx === 2) updateCouponsUI();
-    if (idx === 3) pickScenario(activeScen);
-  }
-
-  document.getElementById('score').innerText = score;
-  document.getElementById('streak-indicator').innerText = "🔥 " + streak;
-  document.getElementById('coupon-balance').innerText = score + " ⭐";
-  renderCard();
+  checkDailyStreak();
+  updateHeaderUI();
+  renderLevelMap();
   updateCouponsUI();
-  checkUserRegistration();
+  renderCardView();
 </script>
 
 </body>
