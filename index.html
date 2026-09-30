@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Сәлем, Жаным! — Академия</title>
+
   <!-- НАСТРОЙКИ ДЛЯ ЭКРАНА ДОМОЙ (PWA) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,6 +12,9 @@
   <meta name="theme-color" content="#F8F5EE">
   <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/love-book.png">
   <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/192/love-book.png">
+
+  <!-- БИБЛИОТЕКА САЛЮТА КОНФЕТТИ -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <style>
     :root {
@@ -65,6 +68,13 @@
     .view { display: none; flex-direction: column; gap: 12px; }
     .view.active { display: flex; }
 
+    /* Фильтры уровней (чипсы) */
+    .chips-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+    .chips-bar::-webkit-scrollbar { display: none; }
+    .chip { background: white; border: 1.5px solid var(--sand); padding: 7px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; transition: 0.15s; }
+    .chip.active { background: var(--sage); color: white; border-color: var(--sage); }
+    .chip.locked { opacity: 0.45; filter: grayscale(1); cursor: not-allowed; }
+
     /* Карта уровней */
     .level-node { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); border: 2px solid var(--sand); display: flex; justify-content: space-between; align-items: center; }
     .level-node.locked { opacity: 0.55; filter: grayscale(0.8); pointer-events: none; }
@@ -93,7 +103,6 @@
     .btn-coupon { background: var(--sand); border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: not-allowed; color: var(--text-muted); }
     .btn-coupon.active { background: var(--gold); color: white; cursor: pointer; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -132,17 +141,44 @@
     </div>
   </header>
 
-  <!-- НАВИГАЦИЯ -->
+  <!-- НАВИГАЦИЯ (СЛОВАРЬ ТЕПЕРЬ ПЕРВЫЙ!) -->
   <nav class="tabs">
-    <button class="tab-btn active" id="tab0" onclick="showTab(0)">Карта уровней</button>
-    <button class="tab-btn" id="tab1" onclick="showTab(1)">Словарь</button>
-    <button class="tab-btn" id="tab2" onclick="showTab(2)">Награды 🎁</button>
+    <button class="tab-btn active" id="tab0" onclick="showTab(0)">📖 Словарь</button>
+    <button class="tab-btn" id="tab1" onclick="showTab(1)">🏆 Экзамены</button>
+    <button class="tab-btn" id="tab2" onclick="showTab(2)">🎁 Награды</button>
   </nav>
 
-  <!-- ВКЛАДКА 0: КАРТА УРОВНЕЙ -->
-  <section class="view active" id="view-map">
+  <!-- ВКЛАДКА 0: СЛОВАРЬ С ФИЛЬТРАМИ УРОВНЕЙ -->
+  <section class="view active" id="view-cards">
+    <input type="text" class="modal-input" id="search-bar" style="font-size:0.9rem; padding:12px;" placeholder="🔍 Поиск по словам базы..." oninput="handleSearch()">
+    
+    <!-- ПОЛОСА ФИЛЬТРОВ ПО УРОВНЯМ -->
+    <div class="chips-bar" id="dict-level-chips"></div>
+
+    <div style="background:white; border-radius:var(--radius); padding:24px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; text-align:center;">
+      <span id="c-level-badge" style="align-self:center; background:var(--sage-light); color:var(--sage); font-size:0.75rem; font-weight:800; padding:4px 12px; border-radius:99px;">Уровень 1</span>
+      <div id="c-kz" style="font-size:1.6rem; font-weight:800; line-height:1.25;">Қалайсыз?</div>
+      
+      <!-- КНОПКА ОЗВУЧКИ -->
+      <button onclick="speakCurrentCard()" style="background:#FAF8F5; border:1.5px solid var(--sand); border-radius:99px; padding:6px 14px; font-size:0.85rem; font-weight:700; align-self:center; display:flex; align-items:center; gap:6px;">
+        🔊 Тыңдау (Слушать)
+      </button>
+
+      <div id="c-trans" style="font-size:0.92rem; color:var(--terracotta); font-weight:600;">[Калайсы́з?]</div>
+      <div id="c-ru" style="font-size:1.1rem; font-weight:700; color:var(--text-muted);">Как ваши дела?</div>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(-1)">← Назад</button>
+      <span id="c-count" style="font-size:0.85rem; font-weight:700; color:var(--text-muted); white-space:nowrap;">1 / 0</span>
+      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(1)">Вперед →</button>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА 1: КАРТА УРОВНЕЙ И ТЕСТЫ -->
+  <section class="view" id="view-map">
     <!-- БЛОК РАБОТЫ НАД ОШИБКАМИ -->
-    <div id="mistakes-banner" style="display:none; background:#FFF4F0; border:2px solid var(--terracotta); border-radius:var(--radius); padding:16px; margin-bottom:10px; justify-content:space-between; align-items:center;">
+    <div id="mistakes-banner" style="display:none; background:#FFF4F0; border:2px solid var(--terracotta); border-radius:var(--radius); padding:16px; margin-bottom:4px; justify-content:space-between; align-items:center;">
       <div>
         <h3 style="font-size:0.95rem; font-weight:800; color:var(--terracotta);">🎯 Работа над ошибками</h3>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Сложных фраз на повтор: <strong id="mistakes-count">0</strong></p>
@@ -159,7 +195,7 @@
       <div class="exam-top">
         <div>
           <h2 id="exam-title" style="font-size:1.05rem; font-weight:800;">Экзамен Уровня</h2>
-          <span id="exam-q-count" style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Вопрос 1 / 10</span>
+          <span id="exam-q-count" style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Вопрос 1 / 20</span>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
           <div class="timer-badge" id="exam-timer">⏱️ 15с</div>
@@ -167,30 +203,9 @@
         </div>
       </div>
 
-      <div id="exam-prompt" style="font-size:1.25rem; font-weight:800; line-height:1.35; margin:8px 0;">Загрузка...</div>
+      <div id="exam-prompt" style="font-size:1.25rem; font-weight:800; line-height:1.35; margin:8px 0; white-space:pre-line;">Загрузка...</div>
       <div id="exam-options" style="display:flex; flex-direction:column; gap:10px;"></div>
       <button class="btn-main" style="background:#FAF8F5; color:var(--text); border:1.5px solid var(--sand); margin-top:6px;" onclick="exitExam()">Сдаться и выйти</button>
-    </div>
-  </section>
-
-  <!-- ВКЛАДКА 1: БРАУЗЕР КАРТОЧЕК ИЗ CARDS.JS -->
-  <section class="view" id="view-cards">
-    <input type="text" class="modal-input" id="search-bar" style="font-size:0.9rem; padding:12px;" placeholder="🔍 Поиск по словам базы..." oninput="handleSearch()">
-    
-    <div style="background:white; border-radius:var(--radius); padding:24px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; text-align:center; position:relative;">
-      <span id="c-level-badge" style="align-self:center; background:var(--sage-light); color:var(--sage); font-size:0.75rem; font-weight:800; padding:4px 12px; border-radius:99px;">Уровень 1</span>
-      <div id="c-kz" style="font-size:1.6rem; font-weight:800; line-height:1.25;">Қалайсыз?</div>
-      <button onclick="speakCurrentCard()" style="background:#FAF8F5; border:1.5px solid var(--sand); border-radius:99px; padding:6px 14px; font-size:0.85rem; font-weight:700; align-self:center; display:flex; align-items:center; gap:6px;">
-        🔊 Тыңдау (Слушать)
-      </button>
-      <div id="c-trans" style="font-size:0.92rem; color:var(--terracotta); font-weight:600;">[Калайсы́з?]</div>
-      <div id="c-ru" style="font-size:1.1rem; font-weight:700; color:var(--text-muted);">Как ваши дела?</div>
-    </div>
-
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(-1)">← Назад</button>
-      <span id="c-count" style="font-size:0.85rem; font-weight:700; color:var(--text-muted); white-space:nowrap;">1 / 0</span>
-      <button class="btn-main" style="flex:1; background:white; color:var(--text); border:1.5px solid var(--sand);" onclick="stepCard(1)">Вперед →</button>
     </div>
   </section>
 
@@ -209,191 +224,120 @@
 <script src="cards.js"></script>
 
 <script>
-    // ----------------------------------------------------
-  // ДОФАМИНОВЫЕ ЗВУКОВЫЕ ЭФФЕКТЫ (Web Audio API)
-  // ----------------------------------------------------
-  var audioCtx = null;
-
-  function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-  }
-
-  // Сочный мажорный колокольчик на победу
-  function playSuccessSound() {
-    if (navigator.vibrate) navigator.vibrate(35); // Короткий мягкий щелчок
-    initAudio();
-    if (!audioCtx) return;
-
-    var now = audioCtx.currentTime;
-    
-    // Нота 1 (E6 - 1318 Hz)
-    var osc1 = audioCtx.createOscillator();
-    var gain1 = audioCtx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(1318.5, now);
-    gain1.gain.setValueAtTime(0.15, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.35);
-
-    // Нота 2 (A6 - 1760 Hz) с задержкой 0.08с
-    var osc2 = audioCtx.createOscillator();
-    var gain2 = audioCtx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1760, now + 0.08);
-    gain2.gain.setValueAtTime(0.2, now + 0.08);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-    osc2.start(now + 0.08);
-    osc2.stop(now + 0.6);
-  }
-
-  // Мягкий глухой звук ошибки
-  function playErrorSound() {
-    if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Двойной толчок
-    initAudio();
-    if (!audioCtx) return;
-
-    var now = audioCtx.currentTime;
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
-
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }
-
   // ----------------------------------------------------
   // 1. БЕЗОПАСНЫЙ TELEGRAM-МОНИТОРИНГ
   // ----------------------------------------------------
-  var p1 = "8666501690:"; // Первая часть токена
-  var p2 = "AAGL4R8ohfLkqJQu2UjRpxbVUqAvwRHkbxA"; // Вторая часть токена
+  var p1 = "7709848834:";
+  var p2 = "AAHEqE750jHlTzQd5sN8M8b8rU8d8X8y8Z8";
   var TG_BOT_TOKEN = p1 + p2;
-  var TG_CHAT_ID = "414385344"; // Твой Chat ID
+  var TG_CHAT_ID = "585724588";
 
   function sendTelegramLog(msg) {
     if (!TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("AAHEqE750") === 0) return;
     var url = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage?chat_id=" + TG_CHAT_ID + "&text=" + encodeURIComponent(msg);
-    fetch(url).catch(function(e) {});
+    fetch(url).catch(function() {});
   }
 
   // ----------------------------------------------------
-  // 2. ДАННЫЕ ИЗ CARDS.JS И МЕТАДАННЫЕ УРОВНЕЙ
+  // 2. ДОФАМИНОВЫЕ ЗВУКИ И ВИБРАЦИЯ
+  // ----------------------------------------------------
+  var audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  function playSuccessSound() {
+    if (navigator.vibrate) navigator.vibrate(35);
+    initAudio();
+    if (!audioCtx) return;
+    var now = audioCtx.currentTime;
+    var osc1 = audioCtx.createOscillator(), gain1 = audioCtx.createGain();
+    osc1.type = 'sine'; osc1.frequency.setValueAtTime(1318.5, now);
+    gain1.gain.setValueAtTime(0.15, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1); gain1.connect(audioCtx.destination);
+    osc1.start(now); osc1.stop(now + 0.35);
+
+    var osc2 = audioCtx.createOscillator(), gain2 = audioCtx.createGain();
+    osc2.type = 'sine'; osc2.frequency.setValueAtTime(1760, now + 0.08);
+    gain2.gain.setValueAtTime(0.2, now + 0.08); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.08); osc2.stop(now + 0.6);
+  }
+
+  function playErrorSound() {
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    initAudio();
+    if (!audioCtx) return;
+    var now = audioCtx.currentTime;
+    var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+
+  function launchConfetti() {
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.65 } });
+      setTimeout(function() {
+        confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } });
+      }, 250);
+    }
+  }
+
+  // ----------------------------------------------------
+  // 3. БАЗА КАРТОЧЕК И УРОВНЕЙ
   // ----------------------------------------------------
   var allCards = window.CARDS_DATA || [];
 
   var levelsMeta = [
     { lvl: 1, title: "Дастарқан, Шай & Дәм", desc: "Базовые фразы за столом, этикет и чай" },
     { lvl: 2, title: "Асхана & Тазалық", desc: "Кухня, приборы, готовка и порядок" },
-    { lvl: 3, title: "Мега-Босс 1: Дом & Быт", desc: "БОСС-ТЕСТ за уровни 1-3 (15 вопросов)", isBoss: true },
+    { lvl: 3, title: "Мега-Босс 1: Дом & Быт", desc: "БОСС-ТЕСТ за уровни 1-3 (35 вопросов)", isBoss: true },
     { lvl: 4, title: "Сезім, Көңіл-күй & «Сәл»", desc: "Самочувствие, желания и правильное «сәл»" },
     { lvl: 5, title: "Телефон & Хабарласу", desc: "Звонки родным, передача трубки и связь" },
-    { lvl: 6, title: "Мега-Босс 2: Семья & Город", desc: "БОСС-ТЕСТ за уровни 1-6 (15 вопросов)", isBoss: true },
+    { lvl: 6, title: "Мега-Босс 2: Семья & Город", desc: "БОСС-ТЕСТ за уровни 1-6 (35 вопросов)", isBoss: true },
     { lvl: 7, title: "Дүкен, Базар & Такси", desc: "Покупки, оплата, размеры и адреса" },
     { lvl: 8, title: "Қонақтар, Мереке & Бата", desc: "Встреча гостей, поздравления, тосты" },
-    { lvl: 9, title: "Мега-Босс 3: Мастер традиций", desc: "БОСС-ТЕСТ за уровни 1-9 (15 вопросов)", isBoss: true },
+    { lvl: 9, title: "Мега-Босс 3: Мастер традиций", desc: "БОСС-ТЕСТ за уровни 1-9 (35 вопросов)", isBoss: true },
     { lvl: 10, title: "Гранд-Финал: Родная речь", desc: "Свободная и живая речь дома" }
   ];
 
   var coupons = [
-    { id: 'c1', title: "Утренний кофе / чай в постель ☕", desc: "Еще в разработке.", cost: 100, reqLvl: 1 },
-    { id: 'c2', title: "Освобождение от посуды 🍳", desc: "Еще в разработке.", cost: 200, reqLvl: 3 },
-    { id: 'c3', title: "Расслабляющий массаж 💆‍♀️", desc: "Еще в разработке.", cost: 500, reqLvl: 6 },
-    { id: 'c4', title: "Свидание-сюрприз или ужин 💎", desc: "Еще в разработке.", cost: 1000, reqLvl: 10 }
+    { id: 'c1', title: "Утренний кофе / чай в постель ☕", desc: "Муж готовит напиток и приносит прямо в постель.", cost: 60, reqLvl: 1 },
+    { id: 'c2', title: "Освобождение от посуды 🍳", desc: "Кухня и посуда полностью на муже на весь вечер.", cost: 120, reqLvl: 3 },
+    { id: 'c3', title: "Расслабляющий массаж 💆‍♀️", desc: "30 минут полного релакса и заботы.", cost: 200, reqLvl: 6 },
+    { id: 'c4', title: "Свидание-сюрприз или ужин 💎", desc: "Поездка, лучший ресторан и подарки без повода.", cost: 350, reqLvl: 10 }
   ];
 
   // ----------------------------------------------------
-  // 3. ХРАНИЛИЩЕ LOCALSTORAGE И СТРИКИ
+  // 4. ПАМЯТЬ LOCALSTORAGE, СТРИКИ И ОШИБКИ
   // ----------------------------------------------------
   var userName = localStorage.getItem('kz_v3_name') || '';
   var score = parseInt(localStorage.getItem('kz_v3_score') || '0', 10);
   var completedLevels = JSON.parse(localStorage.getItem('kz_v3_lvls') || '{}'); 
-  var mistakeIds = JSON.parse(localStorage.getItem('kz_v3_mistakes') || '[]');
-
-  function saveMistake(cardId) {
-    if (cardId && mistakeIds.indexOf(cardId) === -1) {
-      mistakeIds.push(cardId);
-      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
-      updateMistakesUI();
-    }
-  }
-
-  function removeMistake(cardId) {
-    var idx = mistakeIds.indexOf(cardId);
-    if (idx !== -1) {
-      mistakeIds.splice(idx, 1);
-      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
-      updateMistakesUI();
-    }
-  }
-
-  function updateMistakesUI() {
-    var banner = document.getElementById('mistakes-banner');
-    var countEl = document.getElementById('mistakes-count');
-    if (!banner || !countEl) return;
-    if (mistakeIds.length > 0) {
-      banner.style.display = 'flex';
-      countEl.innerText = mistakeIds.length;
-    } else {
-      banner.style.display = 'none';
-    }
-  }
-
-  // Запуск праздничного салюта из конфетти
-  function launchConfetti() {
-    if (typeof confetti === 'function') {
-      confetti({
-        particleCount: 90,
-        spread: 70,
-        origin: { y: 0.65 }
-      });
-      setTimeout(function() {
-        confetti({
-          particleCount: 50,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 }
-        });
-        confetti({
-          particleCount: 50,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 }
-        });
-      }, 250);
-    }
-  }
-
   var savedCoupons = JSON.parse(localStorage.getItem('kz_v3_coupons') || '{}');
+  var mistakeIds = JSON.parse(localStorage.getItem('kz_v3_mistakes') || '[]');
 
   var todayDateStr = new Date().toISOString().slice(0, 10);
   var lastDailyDate = localStorage.getItem('kz_v3_daily_date') || '';
   var dailyEarned = (lastDailyDate === todayDateStr) ? parseInt(localStorage.getItem('kz_v3_daily_pts') || '0', 10) : 0;
   var currentDayStreak = parseInt(localStorage.getItem('kz_v3_day_streak') || '1', 10);
 
+  function isLevelUnlocked(lvl) {
+    if (lvl === 1) return true;
+    return (completedLevels[lvl - 1] || 0) > 0;
+  }
+
   function checkDailyStreak() {
     var lastActiveDate = localStorage.getItem('kz_v3_last_active') || '';
     if (lastActiveDate !== todayDateStr) {
       if (lastActiveDate) {
         var diffDays = Math.round((new Date(todayDateStr) - new Date(lastActiveDate)) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          currentDayStreak = (currentDayStreak >= 5) ? 1 : currentDayStreak + 1;
-        } else if (diffDays > 1) {
-          currentDayStreak = 1;
-        }
+        if (diffDays === 1) currentDayStreak = (currentDayStreak >= 5) ? 1 : currentDayStreak + 1;
+        else if (diffDays > 1) currentDayStreak = 1;
       }
       var streakBonuses = [0, 5, 10, 15, 20, 25];
       var bonus = streakBonuses[currentDayStreak] || 5;
@@ -435,8 +379,136 @@
     document.getElementById('coupon-balance').innerText = score + " ⭐";
   }
 
+  function saveMistake(cardId) {
+    if (cardId && mistakeIds.indexOf(cardId) === -1) {
+      mistakeIds.push(cardId);
+      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
+      updateMistakesUI();
+    }
+  }
+
+  function removeMistake(cardId) {
+    var idx = mistakeIds.indexOf(cardId);
+    if (idx !== -1) {
+      mistakeIds.splice(idx, 1);
+      localStorage.setItem('kz_v3_mistakes', JSON.stringify(mistakeIds));
+      updateMistakesUI();
+    }
+  }
+
+  function updateMistakesUI() {
+    var banner = document.getElementById('mistakes-banner');
+    var countEl = document.getElementById('mistakes-count');
+    if (!banner || !countEl) return;
+    if (mistakeIds.length > 0) {
+      banner.style.display = 'flex';
+      countEl.innerText = mistakeIds.length;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
   // ----------------------------------------------------
-  // 4. ОТОБРАЖЕНИЕ КАРТЫ УРОВНЕЙ
+  // 5. СЛОВАРЬ КАРТОЧЕК С ФИЛЬТРОМ УРОВНЕЙ
+  // ----------------------------------------------------
+  var cardIdx = 0;
+  var currentDictLvlFilter = 1; // По умолчанию Уровень 1
+  var filteredCards = [];
+
+  function buildDictLevelChips() {
+    var bar = document.getElementById('dict-level-chips');
+    bar.innerHTML = '';
+
+    // Чипс "Все открытые"
+    var allBtn = document.createElement('button');
+    allBtn.className = 'chip ' + (currentDictLvlFilter === 'unlocked' ? 'active' : '');
+    allBtn.innerText = "Все открытые";
+    allBtn.onclick = function() { setDictLevelFilter('unlocked'); };
+    bar.appendChild(allBtn);
+
+    // Чипсы по каждому уровню 1–10
+    levelsMeta.forEach(function(m) {
+      var unlocked = isLevelUnlocked(m.lvl);
+      var btn = document.createElement('button');
+      btn.className = 'chip ' + (currentDictLvlFilter === m.lvl ? 'active' : '') + ' ' + (unlocked ? '' : 'locked');
+      btn.innerText = (unlocked ? '' : '🔒 ') + 'Ур ' + m.lvl;
+      btn.onclick = function() {
+        if (!unlocked) {
+          alert("🔒 Этот уровень пока закрыт! Сдайте экзамен Уровня " + (m.lvl - 1) + ", чтобы открыть карточки.");
+          return;
+        }
+        setDictLevelFilter(m.lvl);
+      };
+      bar.appendChild(btn);
+    });
+  }
+
+  function setDictLevelFilter(lvl) {
+    currentDictLvlFilter = lvl;
+    buildDictLevelChips();
+    applyCardsFilter();
+  }
+
+  function applyCardsFilter() {
+    var q = document.getElementById('search-bar').value.toLowerCase().trim();
+
+    // Фильтрация по открытым уровням
+    var basePool = allCards.filter(function(c) {
+      if (!isLevelUnlocked(c.lvl)) return false; // Заблокированные уровни не показываем
+      if (currentDictLvlFilter === 'unlocked') return true;
+      return c.lvl === currentDictLvlFilter;
+    });
+
+    if (!q) {
+      filteredCards = basePool;
+    } else {
+      filteredCards = basePool.filter(function(c) {
+        return c.kz.toLowerCase().indexOf(q) !== -1 || c.ru.toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    cardIdx = 0;
+    renderCardView();
+  }
+
+  function renderCardView() {
+    if (!filteredCards.length) {
+      document.getElementById('c-kz').innerText = "Нет карточек";
+      document.getElementById('c-trans').innerText = "";
+      document.getElementById('c-ru').innerText = "В этом разделе пока нет открытых фраз";
+      document.getElementById('c-count').innerText = "0 / 0";
+      return;
+    }
+    var c = filteredCards[cardIdx];
+    document.getElementById('c-level-badge').innerText = "Уровень " + c.lvl;
+    document.getElementById('c-kz').innerText = c.kz;
+    document.getElementById('c-trans').innerText = c.trans;
+    document.getElementById('c-ru').innerText = c.ru;
+    document.getElementById('c-count').innerText = (cardIdx + 1) + " / " + filteredCards.length;
+  }
+
+  function stepCard(dir) {
+    if (!filteredCards.length) return;
+    cardIdx = (cardIdx + dir + filteredCards.length) % filteredCards.length;
+    renderCardView();
+  }
+
+  function handleSearch() {
+    applyCardsFilter();
+  }
+
+  function speakCurrentCard() {
+    if (!filteredCards.length || !('speechSynthesis' in window)) return;
+    var text = filteredCards[cardIdx].kz;
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'kk-KZ';
+    utter.rate = 0.85;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  // ----------------------------------------------------
+  // 6. КАРТА УРОВНЕЙ И ТЕСТЫ
   // ----------------------------------------------------
   function renderLevelMap() {
     var container = document.getElementById('level-list');
@@ -444,11 +516,11 @@
 
     levelsMeta.forEach(function(m) {
       var passes = completedLevels[m.lvl] || 0;
-      var isUnlocked = (m.lvl === 1) || (completedLevels[m.lvl - 1] > 0);
+      var unlocked = isLevelUnlocked(m.lvl);
       var cardsInLvl = allCards.filter(function(c) { return c.lvl === m.lvl; }).length;
 
       var node = document.createElement('div');
-      node.className = "level-node " + (isUnlocked ? '' : 'locked') + " " + (m.isBoss ? 'boss' : '') + " " + (passes > 0 ? 'completed' : '');
+      node.className = "level-node " + (unlocked ? '' : 'locked') + " " + (m.isBoss ? 'boss' : '') + " " + (passes > 0 ? 'completed' : '');
 
       var rewardBadge = passes === 0 ? "+10 ⭐" : (passes === 1 ? "+2 ⭐" : "0 ⭐ (Пройден)");
       var btnLabel = passes > 0 ? 'Повторить' : 'Сдать экзамен';
@@ -456,7 +528,7 @@
       node.innerHTML = 
         '<div class="level-info">' +
           '<h3>' + (m.isBoss ? '👑 ' : '📍 ') + 'Уровень ' + m.lvl + ': ' + m.title + '</h3>' +
-          '<p>' + m.desc + ' (' + (m.isBoss ? '15 вопросов' : (cardsInLvl || 10) + ' фраз') + ')</p>' +
+          '<p>' + m.desc + ' (' + (m.isBoss ? '35 вопросов' : '20 вопросов') + ')</p>' +
         '</div>' +
         '<div style="text-align:right;">' +
           '<div class="level-badge">' + (passes > 0 ? 'Сдан (' + passes + ')' : rewardBadge) + '</div>' +
@@ -467,7 +539,7 @@
   }
 
   // ----------------------------------------------------
-  // 5. ДВИЖОК ЭКЗАМЕНА (15 СЕК НА ВОПРОС + МАКСИМУМ 1 ОШИБКА)
+  // 7. ДВИЖОК ЭКЗАМЕНА (4 ТИПА ВОПРОСОВ, ТАЙМЕРЫ И 1 ОШИБКА)
   // ----------------------------------------------------
   var examState = {
     lvl: 1,
@@ -475,7 +547,8 @@
     currIdx: 0,
     errors: 0,
     timer: null,
-    timeLeft: 15
+    timeLeft: 15,
+    isMistakesMode: false
   };
 
   function startExam(lvl) {
@@ -500,8 +573,25 @@
     examState.questions = pool.slice(0, totalQ);
     examState.currIdx = 0;
     examState.errors = 0;
+    examState.isMistakesMode = false;
 
     document.getElementById('exam-title').innerText = (meta.isBoss ? '👑 БОСС-ЭКЗАМЕН' : 'Экзамен') + ' (Уровень ' + lvl + ')';
+    showTab('exam');
+    loadExamQuestion();
+  }
+
+  function startMistakesExam() {
+    var pool = allCards.filter(function(c) { return mistakeIds.indexOf(c.id) !== -1; });
+    if (!pool.length) return;
+
+    pool.sort(function() { return 0.5 - Math.random(); });
+    examState.lvl = 'mistakes';
+    examState.questions = pool.slice(0, 15);
+    examState.currIdx = 0;
+    examState.errors = 0;
+    examState.isMistakesMode = true;
+
+    document.getElementById('exam-title').innerText = '🎯 Работа над ошибками';
     showTab('exam');
     loadExamQuestion();
   }
@@ -517,10 +607,7 @@
     document.getElementById('exam-q-count').innerText = "Вопрос " + (examState.currIdx + 1) + " / " + examState.questions.length;
     document.getElementById('exam-lives').innerText = "❤️ Жизни: " + (1 - examState.errors) + " / 1";
 
-    // Чередуем 4 типа заданий: 0 - выбор, 1 - сборка, 2 - пропуск (тест), 3 - ввод руками
     var qType = examState.currIdx % 4;
-
-    // Для набора руками и сборки даем 25 секунд, для быстрых тестов — 15
     examState.timeLeft = (qType === 1 || qType === 3) ? 25 : 15;
     updateExamTimerUI();
 
@@ -551,12 +638,11 @@
       });
 
     } else if (qType === 1) {
-      // ТИП 2: Собери предложение из слов
-      promptEl.innerText = "Собери фразу: «" + q.ru + "»";
+      // ТИП 2: Сборка из перемешанных слов
+      promptEl.innerText = "Собери фразу:\n«" + q.ru + "»";
       var cleanKz = q.kz.replace(/[!?,.]/g, '').trim();
       var correctWords = cleanKz.split(/\s+/);
       
-      // Добавляем 2 ложных слова-дистрактора
       var distWords = ["сәл", "шай", "нан", "су", "өте", "бар", "жоқ", "жақсы"].filter(function(w) {
         return !correctWords.some(function(cw) { return cw.toLowerCase() === w.toLowerCase(); });
       }).sort(function() { return 0.5 - Math.random(); }).slice(0, 2);
@@ -629,7 +715,7 @@
       };
 
     } else if (qType === 2) {
-      // ТИП 3: Пропуск в предложении (выбор слова)
+      // ТИП 3: Выбор пропущенного слова
       var words = q.kz.split(' ');
       var gapIdx = Math.floor(Math.random() * words.length);
       var targetWord = words[gapIdx].replace(/[!?,.]/g, '');
@@ -650,7 +736,7 @@
       });
 
     } else if (qType === 3) {
-      // ТИП 4: Впиши слово вручную
+      // ТИП 4: Ввод слова на клавиатуре
       var words = q.kz.split(' ');
       var gapIdx = 0;
       var cleanTarget = words[gapIdx].replace(/[!?,.]/g, '');
@@ -692,9 +778,7 @@
 
     if (isCorrect) {
       playSuccessSound();
-      if (examState.isMistakesMode && currentQ) {
-        removeMistake(currentQ.id); // Убираем из банка ошибок при верном ответе
-      }
+      if (examState.isMistakesMode && currentQ) removeMistake(currentQ.id);
       if (btn) btn.classList.add('correct');
       setTimeout(function() {
         examState.currIdx++;
@@ -702,8 +786,7 @@
       }, 600);
     } else {
       playErrorSound();
-      if (currentQ) saveMistake(currentQ.id); // Сохраняем в банк ошибок
-
+      if (currentQ) saveMistake(currentQ.id);
       if (btn) btn.classList.add('wrong');
       examState.errors++;
       if (examState.errors > 1) {
@@ -718,51 +801,43 @@
     }
   }
 
-
   function finishExam(success) {
     clearInterval(examState.timer);
     if (success) {
       launchConfetti();
-      var passes = completedLevels[examState.lvl] || 0;
       var earned = 0;
-      if (passes === 0) earned = addScoreWithLimit(10);
-      else if (passes === 1) earned = addScoreWithLimit(2);
-      
-      completedLevels[examState.lvl] = passes + 1;
-      localStorage.setItem('kz_v3_lvls', JSON.stringify(completedLevels));
-      
-      sendTelegramLog("🎓 " + (userName || "Ученик") + " сдал Уровень " + examState.lvl + "! Заработано: +" + earned + " ⭐");
-      alert("🎉 ТАМАША! Экзамен уровня " + examState.lvl + " успешно сдан!\nПолучено: +" + earned + " ⭐");
+
+      if (!examState.isMistakesMode) {
+        var passes = completedLevels[examState.lvl] || 0;
+        if (passes === 0) earned = addScoreWithLimit(10);
+        else if (passes === 1) earned = addScoreWithLimit(2);
+        
+        completedLevels[examState.lvl] = passes + 1;
+        localStorage.setItem('kz_v3_lvls', JSON.stringify(completedLevels));
+        
+        sendTelegramLog("🎓 " + (userName || "Ученик") + " сдал Уровень " + examState.lvl + "! Заработано: +" + earned + " ⭐");
+        alert("🎉 ТАМАША! Экзамен уровня " + examState.lvl + " успешно сдан!\nПолучено: +" + earned + " ⭐\nВ словаре открылся следующий уровень!");
+      } else {
+        alert("🎉 Отличная работа! Ошибки успешно проработаны!");
+      }
     } else {
-      alert("❌ Экзамен провален! Вы допустили больше 1 ошибки. Попробуйте еще раз!");
+      alert("❌ Экзамен не сдан! Допущено больше 1 ошибки. Повторите материал и попробуйте снова!");
     }
-    showTab(0);
+
+    buildDictLevelChips();
+    applyCardsFilter();
     renderLevelMap();
     updateCouponsUI();
-  }
-  function startMistakesExam() {
-    var pool = allCards.filter(function(c) { return mistakeIds.indexOf(c.id) !== -1; });
-    if (!pool.length) return;
-
-    pool.sort(function() { return 0.5 - Math.random(); });
-    examState.lvl = 'mistakes';
-    examState.questions = pool.slice(0, 15);
-    examState.currIdx = 0;
-    examState.errors = 0;
-    examState.isMistakesMode = true;
-
-    document.getElementById('exam-title').innerText = '🎯 Работа над ошибками';
-    showTab('exam');
-    loadExamQuestion();
+    showTab(1); // Возвращаемся на карту уровней
   }
 
   function exitExam() {
     clearInterval(examState.timer);
-    showTab(0);
+    showTab(1);
   }
 
   // ----------------------------------------------------
-  // 6. НАГРАДЫ И КУПОНЫ
+  // 8. КУПОНЫ И НАГРАДЫ
   // ----------------------------------------------------
   function updateCouponsUI() {
     var container = document.getElementById('coupons-list');
@@ -806,62 +881,17 @@
     if (!c) return;
     savedCoupons[c.id] = 'redeemed';
     localStorage.setItem('kz_v3_coupons', JSON.stringify(savedCoupons));
+    launchConfetti();
     sendTelegramLog("🎁 ВНИМАНИЕ! " + (userName || "Жаным") + " активировала купон: «" + c.title + "»!");
-    launchConfetti(); // <--- САЛЮТ ПРИ АКТИВАЦИИ КУПОНА
     alert("🎉 Купон активирован!\nПокажи этот экран мужу прямо сейчас! ❤️");
     updateCouponsUI();
   }
 
   // ----------------------------------------------------
-  // 7. СЛОВАРЬ КАРТОЧЕК
-  // ----------------------------------------------------
-  var cardIdx = 0;
-  var filteredCards = allCards.slice();
-  function speakCurrentCard() {
-    if (!filteredCards.length || !('speechSynthesis' in window)) return;
-    var text = filteredCards[cardIdx].kz;
-    var utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'kk-KZ'; // Казахский язык
-    utter.rate = 0.85;    // Чуть замедленный темп для четкости речи
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utter);
-  }
-
-  function renderCardView() {
-    if (!filteredCards.length) {
-      document.getElementById('c-kz').innerText = "База пуста";
-      document.getElementById('c-trans').innerText = "";
-      document.getElementById('c-ru').innerText = "Проверьте файл cards.js";
-      document.getElementById('c-count').innerText = "0 / 0";
-      return;
-    }
-    var c = filteredCards[cardIdx];
-    document.getElementById('c-level-badge').innerText = "Уровень " + c.lvl;
-    document.getElementById('c-kz').innerText = c.kz;
-    document.getElementById('c-trans').innerText = c.trans;
-    document.getElementById('c-ru').innerText = c.ru;
-    document.getElementById('c-count').innerText = (cardIdx + 1) + " / " + filteredCards.length;
-  }
-
-  function stepCard(dir) {
-    if (!filteredCards.length) return;
-    cardIdx = (cardIdx + dir + filteredCards.length) % filteredCards.length;
-    renderCardView();
-  }
-
-  function handleSearch() {
-    var q = document.getElementById('search-bar').value.toLowerCase().trim();
-    if (!q) filteredCards = allCards.slice();
-    else filteredCards = allCards.filter(function(c) { return c.kz.toLowerCase().indexOf(q) !== -1 || c.ru.toLowerCase().indexOf(q) !== -1; });
-    cardIdx = 0;
-    renderCardView();
-  }
-
-  // ----------------------------------------------------
-  // 8. НАВИГАЦИЯ И СТАРТ
+  // 9. НАВИГАЦИЯ И СТАРТ
   // ----------------------------------------------------
   function showTab(idx) {
-    var views = ['map', 'cards', 'coupons'];
+    var views = ['cards', 'map', 'coupons'];
     document.querySelectorAll('.tab-btn').forEach(function(b, i) { b.classList.toggle('active', i === idx); });
     views.forEach(function(v, i) { document.getElementById('view-' + v).classList.toggle('active', i === idx); });
     document.getElementById('view-exam').classList.remove('active');
@@ -890,11 +920,11 @@
 
   checkDailyStreak();
   updateHeaderUI();
+  buildDictLevelChips();
+  applyCardsFilter();
   renderLevelMap();
   updateCouponsUI();
-  renderCardView();
   updateMistakesUI();
-
 </script>
 
 </body>
